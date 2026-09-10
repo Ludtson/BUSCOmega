@@ -32,6 +32,21 @@ deliberately broken version, to show what skipping QC does.
 `genes used` is per species where it varies (the per-gene methods filter
 per species); a single number where all species share one alignment.
 
+### Why M0 gives three (slightly) different per-species numbers
+
+M0 fixes ω *per gene* — one value applied to every branch. But the reported
+per-species number is a **branch-length-weighted average of the per-gene
+ωɡ**: after `dNɡ,X = ωɡ · dSɡ,X`, the pooled formula reduces to a mean of
+the ωɡ with weight ≈ `Sɡ · dSɡ,X` (synonymous substitutions on species X's
+branch for gene g). Each species has a different divergence profile across
+genes, so the weights differ, so the weighted mean comes out slightly
+different: a_halleri 0.1571, a_thaliana 0.1590, c_grandiflora 0.1576
+(weighted mean of ωɡ: 0.1567 / 0.1584 / 0.1568 — essentially the pooled
+value). The spread is ~1 %, inside the bootstrap noise — M0 is correctly
+reporting no per-species difference. (A second, tiny effect: the dS filter
+drops one extra gene for c_grandiflora, whose longer branch pushes that
+gene's dS past 1.5.)
+
 ### Why the gene counts differ
 
 Only **5 genes are genuinely bad** — mis-aligned, dS > 1.5 on some branch
