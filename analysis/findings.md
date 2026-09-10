@@ -106,6 +106,27 @@ The rest of the drops are **model artifacts, not gene-quality problems**:
    pooling stage (`ds_floor` drop + `--ds-ceiling`) instead of before
    concatenation; the effect is equivalent.
 
+## Are the per-species ω different from the fixed model?
+
+Formally: does the two-ratio model (species gets its own ω) fit
+significantly better than M0? Per gene, `2·(lnL_2ratio − lnL_M0)` is
+χ²(1 df) under the null. Stage 7 now reports this.
+
+| species | genes | LRT > 3.841 (p<0.05) | fraction | mean LRT |
+|---|---|---|---|---|
+| a_halleri | 369 | 32 | 8.7 % | 1.21 |
+| a_thaliana | 369 | 28 | 7.6 % | 1.27 |
+| c_grandiflora | 369 | 36 | 9.8 % | 1.49 |
+
+Under the null: ~5 % significant, mean LRT ≈ 1.0. Observed: a **modest
+excess** (7.6–9.8 %, mean 1.2–1.5) — a minority of genes have a genuine
+species-specific ω, but **no strong, consistent tree-wide lineage effect**.
+Together with the pooled ω (0.163 / 0.170 / 0.151 vs M0 0.158, all inside
+each other's bootstrap CIs), the pilot shows **no meaningful per-species Ne
+difference** — the expected result for three close Brassicaceae. The
+23-taxon run is where a real signal (species clearly outside the M0 range,
+higher `frac_lrt_p05`) would show up.
+
 ## What this means for Chapter 3
 
 - The reported Nₑ proxy is robust to the estimation model. State this with

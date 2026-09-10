@@ -900,11 +900,22 @@ just this one genome-wide number.
 per-gene ω are heavy-tailed (primer §8.8). Overlapping CIs between two
 lineages → no evidence their Nₑ differ.
 
+**Lineage effect — a likelihood-ratio test vs M0.** The two-ratio model
+adds exactly one ω parameter over M0 (per gene), so `2·(lnL_2ratio −
+lnL_M0)` is χ²-distributed with 1 df under the null of no species-specific
+ω. Stage 7 computes this per gene and reports, per species: `n_lrt` (genes
+with both likelihoods), `n_lrt_p05` (genes exceeding 3.841), `frac_lrt_p05`,
+and `mean_lrt`. Under the null you expect `frac_lrt_p05` ≈ 0.05 and
+`mean_lrt` ≈ 1.0. On the pilot: 7.6–9.8 % of genes significant, mean LRT
+1.2–1.5 — a **modest excess over chance, no strong tree-wide lineage
+effect**, consistent with 3 close relatives and with the pooled ω sitting
+inside each other's CIs.
+
 **Outputs** (into `-o`, default `07_ne_proxy/`):
 
 - `ne_proxy.tsv` — `species omega_pooled ci_lo ci_hi n_genes
   n_excl_ds_floor n_excl_ds_ceiling mean_omega median_omega mean_t
-  omega_M0`
+  omega_M0 n_lrt n_lrt_p05 frac_lrt_p05 mean_lrt`
 - `per_gene_omega.tsv` — long: `species gene_id N S dN dS omega t qc_flag
   used excl_reason`. Every gene, kept or dropped, with the reason.
 - `plots/ne_proxy_forest.svg` — per-species pooled ω + CI, with the M0 line

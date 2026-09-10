@@ -79,7 +79,8 @@ def stage_log(logpath: Path, stage: str, event: str, **fields) -> None:
 # records
 # --------------------------------------------------------------------------
 class Row:
-    __slots__ = ("gene_id", "tip", "t", "N", "S", "omega", "dN", "dS", "qc")
+    __slots__ = ("gene_id", "tip", "t", "N", "S", "omega", "dN", "dS", "qc",
+                 "lnL")
 
     def __init__(self, d: dict):
         self.gene_id = d["gene_id"]
@@ -91,6 +92,8 @@ class Row:
         self.dN = float(d["dN"])
         self.dS = float(d["dS"])
         self.qc = d.get("qc_flag", "ok")
+        v = d.get("lnL", "")
+        self.lnL = float(v) if v not in ("", "None") else None
 
 
 def read_records(path: Path) -> list[Row]:
@@ -402,9 +405,18 @@ def main(argv=None) -> int:
               "(run Stage 4/5 with the two_ratio analysis for that).")
         return 0
 
+    # one M0 log-likelihood per gene, for the LRT vs the two-ratio model
+    m0_lnl: dict[str, float] = {}
+    if m0_path.exists():
+        for r in m0_all:
+            if r.lnL is not None:
+                m0_lnl.setdefault(r.gene_id, r.lnL)
+    CHI2_1DF_P05 = 3.841
+
     proxy_rows = ["species\tomega_pooled\tci_lo\tci_hi\tn_genes\t"
                   "n_excl_ds_floor\tn_excl_ds_ceiling\tmean_omega\t"
-                  "median_omega\tmean_t\tomega_M0"]
+                  "median_omega\tmean_t\tomega_M0\tn_lrt\tn_lrt_p05\t"
+                  "frac_lrt_p05\tmean_lrt"]
     per_gene = ["species\tgene_id\tN\tS\tdN\tdS\tomega\tt\tqc_flag\tused\texcl_reason"]
     forest, dists, pooled_by_sp, tvst = {}, {}, {}, []
 
@@ -423,10 +435,22 @@ def main(argv=None) -> int:
         med_o = st.median(oms) if oms else float("nan")
         mean_t = st.fmean([r.t for r in used]) if used else float("nan")
 
+        # LRT: 2-ratio vs M0, per gene (2-ratio adds one omega parameter -> 1 df)
+        tr_lnl: dict[str, float] = {}
+        for r in rows:
+            if r.lnL is not None:
+                tr_lnl.setdefault(r.gene_id, r.lnL)
+        lrts = [2.0 * (tr_lnl[g] - m0_lnl[g])
+                for g in tr_lnl if g in m0_lnl]
+        n_lrt = len(lrts)
+        n_sig = sum(1 for x in lrts if x > CHI2_1DF_P05)
+        frac_sig = n_sig / n_lrt if n_lrt else float("nan")
+        mean_lrt = st.fmean(lrts) if lrts else float("nan")
+
         proxy_rows.append(
             f"{species}\t{om:.6f}\t{lo:.6f}\t{hi:.6f}\t{len(used)}\t"
             f"{n_floor}\t{n_ceil}\t{mean_o:.6f}\t{med_o:.6f}\t{mean_t:.6f}\t"
-            f"{omega_m0:.6f}")
+            f"{omega_m0:.6f}\t{n_lrt}\t{n_sig}\t{frac_sig:.4f}\t{mean_lrt:.4f}")
         for r, is_used, reason in annot:
             per_gene.append(
                 f"{species}\t{r.gene_id}\t{r.N:.1f}\t{r.S:.1f}\t{r.dN:.5f}\t"
@@ -438,7 +462,9 @@ def main(argv=None) -> int:
         tvst.append((species, mean_t, om))
         print(f"{species}: pooled omega = {om:.4f}  "
               f"[{lo:.4f}, {hi:.4f}]  (n={len(used)}, "
-              f"-{n_floor} ds_floor, -{n_ceil} ds>{args.ds_ceiling})")
+              f"-{n_floor} ds_floor, -{n_ceil} ds>{args.ds_ceiling})"
+              + (f"  |  LRT vs M0: {n_sig}/{n_lrt} genes p<0.05 "
+                 f"({frac_sig:.1%}, exp. 5%)" if n_lrt else ""))
 
     (args.out_dir / "ne_proxy.tsv").write_text(
         "\n".join(proxy_rows) + "\n", encoding="utf-8")
