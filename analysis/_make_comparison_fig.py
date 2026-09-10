@@ -16,10 +16,20 @@ METHODS = [
 ]
 SPECIES = ["a_halleri", "a_thaliana", "c_grandiflora"]
 
-rows = {}
+rows, ngenes = {}, {}
 for ln in (HERE / "pilot_method_comparison.tsv").read_text().splitlines()[1:]:
     c = ln.split("\t")
     rows[c[0]] = {sp: float(v) for sp, v in zip(SPECIES, c[1:4])}
+    ngenes[c[0]] = {sp: int(v) for sp, v in zip(SPECIES, c[4:7])}
+
+NG = {
+    "M0 per-species (dS-filtered)": ngenes["M0 per-species (dS-filtered)"],
+    "2-ratio per-gene pooled (BUSCOmega)":
+        ngenes["2-ratio per-gene pooled -- BUSCOmega"],
+    "free-ratio per-gene pooled": ngenes["free-ratio per-gene pooled"],
+    "free-ratio concatenate (eLife-style)":
+        ngenes["free-ratio concatenate (eLife-style, NOT pre-filtered)"],
+}
 
 VALS = {
     "M0 per-species (dS-filtered)": rows["M0 per-species (dS-filtered)"],
@@ -76,7 +86,7 @@ for sp in SPECIES:
         else:
             s.append(f"<path d='M {cx:.1f} {cy-5} l 5 9 l -10 0 z' fill='{col}'/>")
         s.append(f"<text x='{cx+8:.1f}' y='{cy+3}' {MONO} font-size='8' "
-                 f"fill='{col}'>{v:.3f}</text>")
+                 f"fill='{col}'>{v:.3f}  <tspan fill='{DIM}'>n={NG[label][sp]}</tspan></text>")
 
 # legend
 ly = H - 46

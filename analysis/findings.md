@@ -15,11 +15,30 @@ the same job the concatenation-based papers do by pre-filtering genes.
 
 | method | a_halleri | a_thaliana | c_grandiflora |
 |---|---|---|---|
-| M0, per-species (dS-filtered) | 0.157 | 0.159 | 0.158 |
+| M0, per-species (dS-filtered) | 0.157 (n=367) | 0.159 (n=367) | 0.158 (n=366) |
 | M0, concatenate | 0.171 | 0.171 | 0.171 |
-| **2-ratio, per-gene pooled — BUSCOmega** | **0.163** | **0.170** | **0.151** |
-| free-ratio (`model=1`), per-gene pooled | 0.163 | 0.167 | 0.153 |
-| free-ratio, concatenate (eLife-style, *not* pre-filtered) | 0.201 | 0.171 | 0.160 |
+| **2-ratio, per-gene pooled — BUSCOmega** | **0.163 (n=368)** | **0.170 (n=368)** | **0.151 (n=306)** |
+| free-ratio (`model=1`), per-gene pooled | 0.163 (n=366) | 0.167 (n=368) | 0.153 (n=328) |
+| free-ratio, concatenate (eLife-style, *not* pre-filtered) | 0.201 (n=369) | 0.171 (n=369) | 0.160 (n=369) |
+
+`n` = genes contributing after the `ds_floor` / `--ds-ceiling` filter.
+
+### Why the gene counts differ between methods
+
+The filters key off each gene's **estimated dS on that species' branch**, and
+each model estimates dS differently, so different genes cross the thresholds:
+
+- **M0** fixes ω tree-wide, so dS on a terminal branch is essentially its
+  branch length — almost every gene is usable (366–367 / 369).
+- **2-ratio / free-ratio for *C. grandiflora*** keep only 306 / 328. On a
+  3-taxon tree the model cannot constrain the deep outgroup branch for
+  every gene: for ~60 genes the foreground branch collapses to dS ≈ 0 and
+  is filtered as `ds_floor`. This is a **small-sample artifact** — at 23
+  taxa the outgroup branches have neighbours that constrain them and the
+  collapse largely disappears.
+- The pooled ω is barely affected regardless (0.151 with 306 genes vs 0.158
+  for M0 with 366) — the collapsed genes carry almost no synonymous
+  substitution, so they contribute almost nothing to the pool.
 
 ![method comparison](method_comparison.svg)
 
