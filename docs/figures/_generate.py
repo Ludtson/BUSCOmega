@@ -205,12 +205,12 @@ def fig_interpretation():
 def fig_pipeline():
     """Hero illustration: many genomes narrow to a conserved working set,
     pass through the tree, and fan back out to one number per species."""
-    W, H = 1180, 588
+    W, H = 1200, 430
     BG = "#FBFAF6"
     G1, G2, GS = "#2F5233", "#5B8A63", "#DDE8DC"
     RU, RUS = "#A8432E", "#ECD5CD"
     GD, GY = "#8A6D1D", "#A8B0A4"
-    cxs = [110, 262, 414, 566, 718, 870, 1022]
+    cxs = [128, 278, 428, 578, 728, 878, 1028]
     yc = 214                                        # glyph band centre
     R = 52                                          # glyph half-size
 
@@ -241,7 +241,7 @@ def fig_pipeline():
         f"L {cxs[6]+70} {bot+14} "
         f"C {p5-60} {bot+4}, {p5-30} {yc+26}, {p5} {yc+26} "
         f"C {p3-30} {yc+26}, {p3-90} {bot}, {cxs[0]-70} {bot} Z' "
-        f"fill='url(#rib)' opacity='0.55'/>")
+        f"fill='url(#rib)' opacity='0.8'/>")
 
     # ---- glyphs -----------------------------------------------------------
     def circle_venn(cx):
@@ -360,16 +360,16 @@ def fig_pipeline():
                  f"fill='{DIM}' text-anchor='middle'>{script}</text>")
 
     # left inflow: genomes + BUSCO
-    gx = cxs[0] - 92
+    gx = cxs[0] - 88
     for k in range(3):
         for j in range(3):
-            s.append(f"<rect x='{gx-14+j*9}' y='{yc-30+k*10}' width='7' "
-                     f"height='5' rx='1' fill='{G2}' fill-opacity='0.8'/>")
-    s.append(f"<text x='{gx}' y='{yc+30}' {SANS} font-size='9.5' fill='{DIM}' "
+            s.append(f"<rect x='{gx-9+j*9}' y='{yc-30+k*10}' width='7' "
+                     f"height='5' rx='1' fill='{G2}' fill-opacity='0.85'/>")
+    s.append(f"<text x='{gx+4}' y='{yc+31}' {SANS} font-size='9.5' fill='{DIM}' "
              f"text-anchor='middle'>genomes</text>")
-    s.append(f"<text x='{gx}' y='{yc+43}' {MONO} font-size='8' fill='{DIM}' "
-             f"text-anchor='middle'>BUSCO (prereq)</text>")
-    s.append(f"<path d='M {gx+18} {yc} H {cxs[0]-R-4}' stroke='{G1}' "
+    s.append(f"<text x='{gx+4}' y='{yc+43}' {SANS} font-size='9.5' fill='{DIM}' "
+             f"text-anchor='middle'>+ BUSCO</text>")
+    s.append(f"<path d='M {gx+22} {yc} H {cxs[0]-R-4}' stroke='{G1}' "
              f"stroke-width='1.6' marker-end='url(#ah)' opacity='0.8'/>")
 
     # tree feed into stage 4
