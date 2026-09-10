@@ -203,97 +203,193 @@ def fig_interpretation():
 
 
 def fig_pipeline():
-    W, H = 900, 772
-    ACC2 = "#2f5233"
-    BG = "#f5f8f3"
-    SOFT = "#dfe8db"
+    """Hero illustration: many genomes narrow to a conserved working set,
+    pass through the tree, and fan back out to one number per species."""
+    W, H = 1180, 588
+    BG = "#FBFAF6"
+    G1, G2, GS = "#2F5233", "#5B8A63", "#DDE8DC"
+    RU, RUS = "#A8432E", "#ECD5CD"
+    GD, GY = "#8A6D1D", "#A8B0A4"
+    cxs = [110, 262, 414, 566, 718, 870, 1022]
+    yc = 214                                        # glyph band centre
+    R = 52                                          # glyph half-size
+
     s = [f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {W} {H}'>",
-         f"<rect width='{W}' height='{H}' fill='#ffffff'/>",
-         f"<text x='40' y='34' {SANS} font-size='18' font-weight='800' "
-         f"fill='{INK}'>BUSCOmega</text>",
-         f"<text x='40' y='54' {SANS} font-size='12' fill='{DIM}'>"
-         f"BUSCO single-copy orthologs &#8594; per-lineage dN/dS &#8594; "
-         f"a per-species N&#8203;e proxy. Stdlib Python; MAFFT / PAL2NAL / "
-         f"codeml do the heavy lifting.</text>"]
+         "<defs>",
+         f"<linearGradient id='rib' x1='0' y1='0' x2='1' y2='0'>"
+         f"<stop offset='0' stop-color='{GS}'/><stop offset='0.5' "
+         f"stop-color='{GS}'/><stop offset='1' stop-color='{RUS}'/>"
+         f"</linearGradient>",
+         "<marker id='ah' markerWidth='8' markerHeight='8' refX='6' refY='4' "
+         f"orient='auto'><path d='M0 0 L8 4 L0 8 z' fill='{G1}'/></marker>",
+         "</defs>",
+         f"<rect width='{W}' height='{H}' fill='{BG}'/>",
+         f"<text x='44' y='42' {SANS} font-size='21' font-weight='800' "
+         f"fill='{INK}' letter-spacing='-0.5'>BUSCOmega</text>",
+         f"<text x='44' y='64' {SANS} font-size='12.5' fill='{DIM}'>"
+         f"Many genomes narrow to the orthologs they share, pass through the "
+         f"tree one lineage at a time, and fan back out to one N&#8203;e "
+         f"proxy per species.</text>"]
 
-    cx, bw = 250, 340       # stage column
-    ix = 40                 # input labels (left)
-    ox = cx + bw + 20       # outputs (right)
+    # the ribbon: wide (all genes) -> pinched (working set) -> flared (per species)
+    top, bot = yc - 66, yc + 66
+    p3, p5 = cxs[2], cxs[4]
+    s.append(
+        f"<path d='M {cxs[0]-70} {top} "
+        f"C {p3-90} {top}, {p3-30} {yc-26}, {p3} {yc-26} "
+        f"C {p5-30} {yc-26}, {p5-60} {top-4}, {cxs[6]+70} {top-14} "
+        f"L {cxs[6]+70} {bot+14} "
+        f"C {p5-60} {bot+4}, {p5-30} {yc+26}, {p5} {yc+26} "
+        f"C {p3-30} {yc+26}, {p3-90} {bot}, {cxs[0]-70} {bot} Z' "
+        f"fill='url(#rib)' opacity='0.55'/>")
 
-    def box(y, h, num, title, tool, fill, num_fill):
-        g = [f"<rect x='{cx}' y='{y}' width='{bw}' height='{h}' rx='9' "
-             f"fill='{fill}' stroke='{SOFT}'/>"]
-        if num:
-            g.append(f"<circle cx='{cx+24}' cy='{y+h/2:.0f}' r='13' "
-                     f"fill='{num_fill}'/>")
-            g.append(f"<text x='{cx+24}' y='{y+h/2+4:.0f}' {MONO} "
-                     f"font-size='12' font-weight='700' fill='#fff' "
-                     f"text-anchor='middle'>{num}</text>")
-        gx = cx + (46 if num else 16)
-        g.append(f"<text x='{gx}' y='{y+ (h/2-3 if tool else h/2+4):.0f}' "
-                 f"{SANS} font-size='12.5' font-weight='700' "
-                 f"fill='{INK}'>{title}</text>")
-        if tool:
-            g.append(f"<text x='{gx}' y='{y+h/2+13:.0f}' {MONO} "
-                     f"font-size='9.5' fill='{DIM}'>{tool}</text>")
-        return "".join(g)
+    # ---- glyphs -----------------------------------------------------------
+    def circle_venn(cx):
+        o = []
+        for dx in (-15, 15, 0):
+            dy = 0 if dx else 16
+            o.append(f"<circle cx='{cx+dx}' cy='{yc-6+dy}' r='24' "
+                     f"fill='{G2}' fill-opacity='0.28' stroke='{G2}'/>")
+        o.append(f"<circle cx='{cx}' cy='{yc+2}' r='7' fill='{G1}'/>")
+        return "".join(o)
 
-    def arrow(y1, y2):
-        return (f"<line x1='{cx+bw/2:.0f}' y1='{y1}' x2='{cx+bw/2:.0f}' "
-                f"y2='{y2}' stroke='{DIM}' stroke-width='1.5' "
-                f"marker-end='url(#a)'/>")
+    def seq_stack(cx):
+        o = []
+        for i, col in enumerate((G1, RU, G2)):
+            y = yc - 24 + i * 17
+            o.append(f"<path d='M {cx-30} {y} h 8' stroke='{col}' "
+                     f"stroke-width='3'/>")
+            o.append(f"<path d='M {cx-18} {y} q 8 -6 16 0 t 16 0 t 12 0' "
+                     f"stroke='{col}' stroke-width='2' fill='none'/>")
+        return "".join(o)
 
-    def side(x, y, text, anchor, col=DIM):
-        return (f"<text x='{x}' y='{y}' {MONO} font-size='9.5' fill='{col}' "
-                f"text-anchor='{anchor}'>{text}</text>")
+    def codon_grid(cx):
+        o = []
+        pat = ["GGGrGGGG", "GGrGG-GG", "GGGGGGrG", "GrGG-GGG"]
+        for r, row in enumerate(pat):
+            for c, ch in enumerate(row):
+                col = {"G": G2, "r": RU, "-": GY}[ch]
+                op = "0.35" if ch == "-" else "0.9"
+                o.append(f"<rect x='{cx-32+c*8.2:.1f}' y='{yc-22+r*11:.1f}' "
+                         f"width='6.6' height='9' rx='1.5' fill='{col}' "
+                         f"fill-opacity='{op}'/>")
+        return "".join(o)
 
-    def feed(fx, fy, ty):
-        return (f"<path d='M {fx} {fy} H {cx-6}' stroke='{DIM}' "
-                f"stroke-width='1.2' fill='none' marker-end='url(#a)'/>")
+    def tree(cx, fg=None):
+        # 4-tip tree, root left; fg = index 0..3 of the highlighted tip
+        tips = [yc - 27, yc - 9, yc + 9, yc + 27]
+        o = [f"<path d='M {cx-34} {yc} h 14' stroke='{G1}' stroke-width='2' "
+             f"fill='none'/>"]
+        o.append(f"<path d='M {cx-20} {yc} V {tips[0]} V {tips[3]}' "
+                 f"stroke='{G1}' stroke-width='2' fill='none'/>")
+        o.append(f"<path d='M {cx-20} {(tips[0]+tips[1])/2:.0f} h 10 "
+                 f"V {tips[0]} M {cx-10} {(tips[0]+tips[1])/2:.0f} V {tips[1]}' "
+                 f"stroke='{G1}' stroke-width='2' fill='none'/>")
+        for i, ty in enumerate(tips):
+            x0 = cx - 20 if i in (0, 3) else cx - 10
+            hot = (i == fg)
+            o.append(f"<path d='M {x0} {ty} H {cx+28}' stroke="
+                     f"'{RU if hot else G1}' stroke-width='{4 if hot else 2}' "
+                     f"fill='none'/>")
+            o.append(f"<circle cx='{cx+28}' cy='{ty}' r='{3.5 if hot else 2.5}' "
+                     f"fill='{RU if hot else G2}'/>")
+        if fg is not None:
+            o.append(f"<text x='{cx+34}' y='{tips[fg]+3}' {MONO} "
+                     f"font-size='9' font-weight='700' fill='{RU}'>#1</text>")
+        return "".join(o)
 
-    s.append("<defs><marker id='a' markerWidth='7' markerHeight='7' "
-             "refX='6' refY='3.5' orient='auto'>"
-             f"<path d='M0 0 L7 3.5 L0 7 z' fill='{DIM}'/></marker></defs>")
+    def doc_tree(cx):
+        o = [f"<rect x='{cx-34}' y='{yc-30}' width='30' height='40' rx='3' "
+             f"fill='#fff' stroke='{G2}'/>"]
+        for k in range(4):
+            o.append(f"<path d='M {cx-28} {yc-22+k*8} h 18' stroke='{GY}' "
+                     f"stroke-width='1.5'/>")
+        o.append(tree(cx + 16))
+        return "".join(o)
 
-    rows = [
-        # y, h, num, title, tool, output-label
-        (74,  40, "",  "isoform-cleaned proteomes + CDS", "one protein per gene (input contract)", None),
-        (132, 44, "0", "BUSCO  (prerequisite)", "prep_optional/run_busco.sh -- protein mode", "full_table.tsv  x N species"),
-        (204, 44, "1", "common single-copy set", "01_common_scos.py -- strict intersection", "common_scos.tsv"),
-        (276, 44, "2", "extract per-gene sequences", "02_extract_sco_seqs.py -- exact ID + suffix-strip", "prt/&lt;id&gt;.faa , cds/&lt;id&gt;.fna"),
-        (348, 44, "3", "codon alignment", "03_codon_align.py -- MAFFT --auto &#8594; PAL2NAL", "codon_aln/&lt;id&gt;.pml"),
-        (420, 44, "4", "codeml analysis set-up", "04_codeml_control.py -- M0 + 2-ratio templates + labelled trees", "ctl/ , trees/ , stage4_analyses.tsv"),
-        (492, 44, "5", "run codeml", "05_run_codeml.py -- batched, --jobs, per-gene retry", "&lt;analysis&gt;/batch_*/batch.mlc"),
-        (564, 44, "6", "parse output", "06_parse_codeml_output.py -- + QC flags", "&lt;analysis&gt;_records.tsv"),
-        (636, 48, "7", "the Ne proxy", "07_ne_proxy.py -- count-pooled omega + gene bootstrap", "ne_proxy.tsv  +  plots/*.svg"),
+    def table(cx):
+        o = []
+        for r in range(3):
+            for c in range(3):
+                o.append(f"<rect x='{cx-30+c*20}' y='{yc-22+r*15}' width='17' "
+                         f"height='12' rx='1.5' fill='#fff' stroke='{GY}'/>")
+        o.append(f"<rect x='{cx-30}' y='{yc-22}' width='57' height='12' "
+                 f"fill='{G2}' fill-opacity='0.25'/>")
+        return "".join(o)
+
+    def forest(cx):
+        o = [f"<line x1='{cx-34}' y1='{yc+26}' x2='{cx+34}' y2='{yc+26}' "
+             f"stroke='{GY}'/>"]
+        for i, (mx, w) in enumerate([(-6, 12), (4, 10), (-14, 11)]):
+            y = yc - 16 + i * 16
+            o.append(f"<line x1='{cx+mx-w}' y1='{y}' x2='{cx+mx+w}' y2='{y}' "
+                     f"stroke='{RU}' stroke-width='2'/>")
+            o.append(f"<circle cx='{cx+mx}' cy='{y}' r='3.5' fill='{RU}'/>")
+        return "".join(o)
+
+    glyphs = [circle_venn, seq_stack, codon_grid, doc_tree,
+              lambda cx: tree(cx, fg=1) +
+              f"<text x='{cx-2}' y='{yc+34}' {MONO} font-size='10' "
+              f"fill='{G1}' text-anchor='middle'>&#969;</text>",
+              table, forest]
+    caps = [
+        ("1", "common set", "01_common_scos.py"),
+        ("2", "sequences", "02_extract_sco_seqs.py"),
+        ("3", "codon align", "03_codon_align.py"),
+        ("4", "codeml set-up", "04_codeml_control.py"),
+        ("5", "run codeml", "05_run_codeml.py"),
+        ("6", "parse", "06_parse_codeml_output.py"),
+        ("7", "Ne proxy", "07_ne_proxy.py"),
     ]
-    # tree input feeds stage 4
-    for i, (y, h, num, title, tool, out) in enumerate(rows):
-        fill = BG if num else "#ffffff"
-        s.append(box(y, h, num, title, tool, fill, ACC2))
-        if out:
-            s.append(f"<text x='{ox}' y='{y+h/2+3:.0f}' {MONO} font-size='9.5' "
-                     f"fill='{ACC2}'>&#8594; {out}</text>")
-        if 0 < i < len(rows):
-            prev = rows[i - 1]
-            s.append(arrow(prev[0] + prev[1], y))
+    for i, cx in enumerate(cxs):
+        s.append(f"<circle cx='{cx}' cy='{yc}' r='{R}' fill='#fff' "
+                 f"stroke='{GS}' stroke-width='2'/>")
+        s.append(glyphs[i](cx))
+        if i:
+            s.append(f"<path d='M {cxs[i-1]+R+3} {yc} H {cx-R-6}' "
+                     f"stroke='{G1}' stroke-width='1.6' fill='none' "
+                     f"marker-end='url(#ah)' opacity='0.8'/>")
+        num, name, script = caps[i]
+        by = yc + R + 34
+        s.append(f"<circle cx='{cx}' cy='{by-6}' r='11' fill='{G1}'/>")
+        s.append(f"<text x='{cx}' y='{by-2}' {MONO} font-size='11' "
+                 f"font-weight='700' fill='#fff' text-anchor='middle'>{num}</text>")
+        s.append(f"<text x='{cx}' y='{by+20}' {SANS} font-size='11.5' "
+                 f"font-weight='700' fill='{INK}' text-anchor='middle'>{name}</text>")
+        s.append(f"<text x='{cx}' y='{by+35}' {MONO} font-size='8.5' "
+                 f"fill='{DIM}' text-anchor='middle'>{script}</text>")
 
-    # species tree feeds stage 4
-    s.append(f"<rect x='{ix}' y='426' width='150' height='32' rx='7' "
-             f"fill='#ffffff' stroke='{SOFT}'/>")
-    s.append(side(ix + 10, 446, "species tree (Newick)", "start", INK))
-    s.append(f"<path d='M {ix+150} 442 H {cx-6}' stroke='{DIM}' "
-             f"stroke-width='1.2' fill='none' marker-end='url(#a)'/>")
-    s.append(side(ix + 10, 472, "prep_optional/species_tree.py", "start"))
+    # left inflow: genomes + BUSCO
+    gx = cxs[0] - 92
+    for k in range(3):
+        for j in range(3):
+            s.append(f"<rect x='{gx-14+j*9}' y='{yc-30+k*10}' width='7' "
+                     f"height='5' rx='1' fill='{G2}' fill-opacity='0.8'/>")
+    s.append(f"<text x='{gx}' y='{yc+30}' {SANS} font-size='9.5' fill='{DIM}' "
+             f"text-anchor='middle'>genomes</text>")
+    s.append(f"<text x='{gx}' y='{yc+43}' {MONO} font-size='8' fill='{DIM}' "
+             f"text-anchor='middle'>BUSCO (prereq)</text>")
+    s.append(f"<path d='M {gx+18} {yc} H {cxs[0]-R-4}' stroke='{G1}' "
+             f"stroke-width='1.6' marker-end='url(#ah)' opacity='0.8'/>")
 
-    s.append(f"<text x='40' y='{H-34}' {SANS} font-size='10.5' fill='{DIM}'>"
-             f"Every stage writes its own <tspan {MONO}>stageN.log</tspan> "
-             f"(timestamp, params, tool version, elapsed) and a manifest of "
-             f"what passed and what dropped, with the reason.</text>")
-    s.append(f"<text x='40' y='{H-18}' {SANS} font-size='10.5' fill='{DIM}'>"
-             f"Stdlib-only Python; runs from 3 to hundreds of taxa, any "
-             f"clade, any annotation source. Two-ratio branch model, one "
-             f"run per focal species.</text>")
+    # tree feed into stage 4
+    s.append(f"<path d='M {cxs[3]} {yc-R-30} V {yc-R-4}' stroke='{G1}' "
+             f"stroke-width='1.5' fill='none' marker-end='url(#ah)' "
+             f"opacity='0.7'/>")
+    s.append(f"<text x='{cxs[3]}' y='{yc-R-38}' {SANS} font-size='9.5' "
+             f"fill='{DIM}' text-anchor='middle'>species tree</text>")
+
+    s.append(f"<text x='44' y='{H-46}' {SANS} font-size='11' fill='{DIM}'>"
+             f"<tspan font-weight='700' fill='{INK}'>N&#8203;e proxy</tspan> = "
+             f"count-pooled dN/dS on each species' own branch "
+             f"(two-ratio branch model), with a gene-bootstrap CI.</text>")
+    s.append(f"<text x='44' y='{H-28}' {SANS} font-size='11' fill='{DIM}'>"
+             f"Standard-library Python; MAFFT / PAL2NAL / codeml do the "
+             f"alignment and model fitting. Every stage: a timestamped log "
+             f"and a pass/drop manifest.</text>")
+    s.append(f"<text x='44' y='{H-10}' {MONO} font-size='9' fill='{GY}'>"
+             f"run_buscomega.py orchestrates all seven &#183; runs 3 to "
+             f"hundreds of taxa, any clade</text>")
     s.append("</svg>")
     (OUT / "pipeline.svg").write_text("\n".join(s), encoding="utf-8")
 
