@@ -1,0 +1,11 @@
+param	value
+cleandata	1
+CodonFreq	2
+icode	0
+fix_kappa	0
+kappa	2.0
+fix_omega	0
+omega	0.4
+model_M0	0
+model_two_ratio	2
+NSsites	0

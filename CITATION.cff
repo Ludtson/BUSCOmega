@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "BUSCOmega: a BUSCO dN/dS pipeline for a per-species Ne proxy"
+abstract: >-
+  BUSCOmega turns per-species BUSCO output into a per-species effective
+  population size (Ne) proxy. It finds the single-copy orthologs common to
+  every species in a clade, codon-aligns them (MAFFT then PAL2NAL), runs
+  codeml (PAML) under a two-ratio branch model with each species in turn as
+  the foreground, and pools per-gene synonymous and nonsynonymous
+  substitution across genes into one count-pooled dN/dS per lineage with a
+  gene-bootstrap confidence interval. Developed as part of dissertation work
+  on the identification and evolutionary analysis of de novo genes (DNGs).
+  Standard-library Python only.
+authors:
+  - family-names: Owoyemi
+    given-names: Adekolá
+    orcid: "https://orcid.org/0000-0003-4251-5777"
+    affiliation: "Protein Evolution Lab (Casola Lab), Texas A&M University"
+  - name: "Protein Evolution Lab (Casola Lab), Texas A&M University"
+repository-code: "https://github.com/Ludtson/BUSCOmega"
+license: MIT
+version: "0.1.0"
+date-released: "2026-09-10"
+keywords:
+  - comparative genomics
+  - dN/dS
+  - effective population size
+  - nearly-neutral theory
+  - BUSCO
+  - PAML
+  - de novo genes
+  - bioinformatics pipeline

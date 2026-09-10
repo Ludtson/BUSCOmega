@@ -1,0 +1,2 @@
+[2026-09-10 13:41:16Z] stage3 start  genes=369  jobs=8  threads=1  mafft=v7.526_(2024/Apr/26)  pal2nal=/home/ludtson/miniconda3/envs/buscomega/bin/pal2nal.pl
+[2026-09-10 13:41:58Z] stage3 done  aligned=369  dropped=0  elapsed_s=41.7

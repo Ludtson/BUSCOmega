@@ -1,0 +1,10 @@
+# BUSCO version is: 5.7.1
+# The lineage dataset is: brassicales_odb10
+# Busco id	Status	Sequence	Score	Length
+geneA	Complete	sp1_protA	100	300
+geneB	Complete	sp1_protB	100	300
+geneC	Complete	sp1_protC	100	300
+geneD	Complete	sp1_protD	100	300
+geneE	Fragmented	sp1_protE	40	120
+geneF	Complete	sp1_protF	100	300
+geneG	Missing

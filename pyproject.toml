@@ -1,0 +1,26 @@
+# BUSCOmega is standard-library only and runs as scripts -- there is nothing
+# to build or install. This file exists for project metadata and to point
+# pytest at the tests/ directory.
+
+[project]
+name = "buscomega"
+version = "0.1.0"
+description = "BUSCO dN/dS pipeline for a per-species Ne proxy"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Adekola Owoyemi" },
+]
+keywords = ["dN/dS", "effective population size", "BUSCO", "PAML", "comparative genomics"]
+dependencies = []                     # stdlib only
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/Ludtson/BUSCOmega"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

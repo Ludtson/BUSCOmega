@@ -1,0 +1,42 @@
+name: tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run tests (stdlib only, no external binaries)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pytest tests/ -v
+      - name: Confirm stdlib-only
+        run: |
+          python - <<'EOF'
+          import ast, sys, pathlib
+          std = set(sys.stdlib_module_names)
+          bad = []
+          for f in list(pathlib.Path("codes").rglob("*.py")) + [pathlib.Path("run_buscomega.py")]:
+              for node in ast.walk(ast.parse(f.read_text())):
+                  if isinstance(node, ast.Import):
+                      for n in node.names:
+                          if n.name.split(".")[0] not in std:
+                              bad.append(f"{f}: {n.name}")
+                  elif isinstance(node, ast.ImportFrom) and node.level == 0:
+                      if node.module and node.module.split(".")[0] not in std:
+                          bad.append(f"{f}: {node.module}")
+          if bad:
+              print("NON-STDLIB IMPORTS:", *bad, sep="\n  "); sys.exit(1)
+          print("stdlib-only: OK")
+          EOF

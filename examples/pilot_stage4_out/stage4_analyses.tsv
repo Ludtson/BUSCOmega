@@ -1,0 +1,5 @@
+analysis	type	model	nssites	treefile	ctl_template
+m0	m0	0	0	trees/m0.nwk	ctl/m0.ctl
+two_ratio.c_grandiflora	two_ratio	2	0	trees/two_ratio/c_grandiflora.nwk	ctl/two_ratio.ctl
+two_ratio.a_halleri	two_ratio	2	0	trees/two_ratio/a_halleri.nwk	ctl/two_ratio.ctl
+two_ratio.a_thaliana	two_ratio	2	0	trees/two_ratio/a_thaliana.nwk	ctl/two_ratio.ctl

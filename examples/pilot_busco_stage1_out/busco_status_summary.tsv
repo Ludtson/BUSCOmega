@@ -1,0 +1,4 @@
+species	complete	duplicated	fragmented	missing	total	in_common_set	sole_block_dup	sole_block_frag	sole_block_missing	recoverable
+a_halleri	393	24	4	17	438	369	11	4	15	30
+a_thaliana	421	6	0	1	428	369	3	0	0	3
+c_grandiflora	402	2	17	5	426	369	1	16	4	21

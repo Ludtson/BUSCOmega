@@ -1,0 +1,32 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 292'>
+<rect width='720' height='292' fill='#ffffff'/>
+<text x='28' y='27' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='#1c231d'>Three regimes a foreground branch can be in</text>
+<text x='28' y='46' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='11.5' fill='#5c6657'>Real pilot means for the highlighted branch.</text>
+<text x='135' y='78' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='700' fill='#1c231d' text-anchor='middle'>healthy</text>
+<line x1='135' y1='92' x2='135' y2='114' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='135' y1='114' x2='103' y2='146' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='135' y1='114' x2='177' y2='152' stroke='#a8432e' stroke-width='4'/>
+<text x='183' y='164' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='9' fill='#a8432e'>a_halleri</text>
+<text x='47' y='196' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>t = 0.20</text>
+<text x='47' y='212' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>dS = 0.25</text>
+<text x='47' y='236' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>unsaturated, constrained by its</text>
+<text x='47' y='250' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>sister a_thaliana &#8594; &#969; estimable</text>
+<text x='365' y='78' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='700' fill='#1c231d' text-anchor='middle'>saturated</text>
+<line x1='365' y1='92' x2='365' y2='114' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='365' y1='114' x2='333' y2='146' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='365' y1='114' x2='407' y2='152' stroke='#a8432e' stroke-width='7'/>
+<text x='413' y='164' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='9' fill='#a8432e'>c_grandiflora, ok genes</text>
+<text x='277' y='196' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>t = 0.73</text>
+<text x='277' y='212' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>dS = 0.83</text>
+<text x='277' y='236' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>deep branch, synonymous sites</text>
+<text x='277' y='250' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>hit repeatedly &#8594; dS unreliable</text>
+<text x='595' y='78' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='700' fill='#1c231d' text-anchor='middle'>collapsed</text>
+<line x1='595' y1='92' x2='595' y2='114' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='595' y1='114' x2='563' y2='146' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='595' y1='114' x2='637' y2='152' stroke='#a8432e' stroke-width='1.2'/>
+<text x='643' y='164' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='9' fill='#a8432e'>c_grandiflora, flagged</text>
+<text x='507' y='196' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>t &#8776; 0.001</text>
+<text x='507' y='212' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>dS &#8776; 0</text>
+<text x='507' y='236' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>3-taxon model under-determined</text>
+<text x='507' y='250' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='10' fill='#5c6657'>&#8594; branch driven to zero</text>
+</svg>

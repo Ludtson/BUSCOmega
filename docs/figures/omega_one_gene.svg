@@ -1,0 +1,24 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 288'>
+<rect width='720' height='288' fill='#ffffff'/>
+<text x='28' y='27' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='#1c231d'>One gene, one branch: &#969; is a ratio of two small counts</text>
+<text x='28' y='46' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='11.5' fill='#5c6657'>Each tick = one inferred substitution on the branch.  <tspan fill='#2f6b4f' font-weight='700'>&#9632;</tspan> synonymous   <tspan fill='#a8432e' font-weight='700'>&#9632;</tspan> nonsynonymous</text>
+<text x='28' y='92' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='600' fill='#1c231d'>Gene A</text>
+<line x1='92' y1='88' x2='262' y2='88' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='110' y1='81' x2='110' y2='95' stroke='#2f6b4f' stroke-width='2'/><line x1='147' y1='81' x2='147' y2='95' stroke='#2f6b4f' stroke-width='2'/><line x1='184' y1='81' x2='184' y2='95' stroke='#2f6b4f' stroke-width='2'/><line x1='210' y1='81' x2='210' y2='95' stroke='#2f6b4f' stroke-width='2'/><line x1='242' y1='81' x2='242' y2='95' stroke='#2f6b4f' stroke-width='2'/>
+<line x1='132' y1='81' x2='132' y2='95' stroke='#a8432e' stroke-width='2'/>
+<text x='300' y='92' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>&#969; &#8776; 0.20</text>
+<text x='470' y='92' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#5c6657'>usable</text>
+<text x='28' y='150' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='600' fill='#1c231d'>Gene B</text>
+<line x1='92' y1='146' x2='262' y2='146' stroke='#5c6657' stroke-width='1.5'/>
+<line x1='162' y1='139' x2='162' y2='153' stroke='#2f6b4f' stroke-width='2'/>
+
+<text x='300' y='150' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>&#969; = 0 / tiny</text>
+<text x='470' y='150' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#5c6657'>&#8594; pinned at 0</text>
+<text x='28' y='208' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='12' font-weight='600' fill='#1c231d'>Gene C</text>
+<line x1='92' y1='204' x2='262' y2='204' stroke='#5c6657' stroke-width='1.5'/>
+
+<line x1='142' y1='197' x2='142' y2='211' stroke='#a8432e' stroke-width='2'/><line x1='202' y1='197' x2='202' y2='211' stroke='#a8432e' stroke-width='2'/>
+<text x='300' y='208' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#1c231d'>&#969; = large / 0</text>
+<text x='470' y='208' font-family='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' font-size='11' fill='#5c6657'>&#8594; pinned at ceiling</text>
+<text x='28' y='268' font-family='ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif' font-size='11' fill='#5c6657'>Expected counts per branch are single digits, so Poisson noise is &#177;50&#8211;100%. A conserved gene often shows no nonsynonymous change (&#969;&#8594;0); a short branch often shows no synonymous change (&#969;&#8594;&#8734;).</text>
+</svg>

@@ -1,0 +1,43 @@
+# Heavy / regenerable example data -- not committed.
+# (gitignore has no inline comments; keep patterns on their own lines.)
+examples/pilot_proteomes/
+examples/pilot_stage2_out/
+examples/pilot_stage3_out/prot_aln/
+examples/pilot_stage5_out/
+examples/pilot_stage7_out/plots/
+examples/3species_pilot/pilot_free_model.mlc
+
+# Raw BUSCO run folders inside the example species dirs (keep only full_table.tsv)
+examples/pilot_busco/*/run_*/busco_sequences/
+examples/pilot_busco/*/run_*/hmmer_output/
+examples/pilot_busco/*/run_*/*.txt
+examples/pilot_busco/*/logs/
+examples/pilot_busco/*/*.log
+
+# Pipeline run outputs
+/runs/
+*_run/
+run.log
+run_summary.tsv
+gene_tracking.tsv
+stage[1-7].stdout
+
+# codeml / alignment scratch
+2NG.*
+rst
+rst1
+rub
+lnf
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,40 @@
+# BUSCOmega — conda environment for the external binaries only.
+# The Python side is standard-library only; there is nothing to pip install.
+#
+#   conda env create -f environment.yml      (or: mamba env create -f environment.yml)
+#   conda activate buscomega
+#
+# Update after pulling a new version:
+#   conda env update -f environment.yml --prune
+#
+name: buscomega
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # --- core pipeline (Stages 3-5) ---
+  - python >=3.9
+  - mafft >=7.5          # Stage 3 — protein alignment
+  - pal2nal =14.1        # Stage 3 — protein aln -> codon alignment
+  - paml >=4.10          # Stages 4-5 — provides `codeml`
+                         #   (parser validated against 4.10.7 / 4.10.10; re-check if bumping)
+
+# ---------------------------------------------------------------------------
+# OPTIONAL add-ons — not installed by default. Each is only needed for one
+# non-core feature; add the ones you want with:
+#   conda install -n buscomega -c <channel> <package>
+#
+#   busco >=5.5           (bioconda)      -- prerequisite step only
+#                         prep_optional/run_busco.sh, if you have no BUSCO
+#                         output yet. Pulls a large tree (hmmer, metaeuk,
+#                         augustus/miniprot). Many users keep it in its own env.
+#
+#   iqtree >=2.2          (bioconda)      -- prep_optional/species_tree.py infer
+#                         --run-iqtree, i.e. inferring a species tree from the
+#                         Stage 3 alignments. Not needed if you supply a tree.
+#
+#   librsvg              (conda-forge)   -- Stage 7 `07_ne_proxy.py --png`.
+#                         Provides `rsvg-convert` to rasterise the SVG plots.
+#                         `inkscape` (conda-forge) or `cairosvg` (pip) also work.
+#                         SVG is always written; PNG is the optional extra.
+# ---------------------------------------------------------------------------

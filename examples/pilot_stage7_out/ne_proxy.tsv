@@ -1,0 +1,4 @@
+species	omega_pooled	ci_lo	ci_hi	n_genes	n_excl_ds_floor	n_excl_ds_ceiling	mean_omega	median_omega	mean_t	omega_M0
+a_halleri	0.162623	0.151615	0.173009	368	0	1	5.634927	0.138800	0.064402	0.131553
+a_thaliana	0.169905	0.158003	0.184652	368	0	1	5.597637	0.146400	0.087087	0.131553
+c_grandiflora	0.150943	0.136618	0.166895	306	61	2	231.877600	0.134350	0.103922	0.131553
