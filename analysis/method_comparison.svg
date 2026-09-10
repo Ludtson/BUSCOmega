@@ -1,0 +1,54 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 340'>
+<rect width='720' height='340' fill='#ffffff'/>
+<text x='28' y='26' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='#1c231d'>Per-species &#969; on the 3-taxon pilot: four estimation routes</text>
+<text x='28' y='44' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='11' fill='#5c6657'>369 BUSCO genes. The branch model barely moves the estimate; gene filtering does.</text>
+<line x1='150' y1='58' x2='150' y2='294' stroke='#eee'/>
+<text x='150' y='310' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='9' fill='#5c6657' text-anchor='middle'>0.12</text>
+<line x1='282' y1='58' x2='282' y2='294' stroke='#eee'/>
+<text x='282' y='310' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='9' fill='#5c6657' text-anchor='middle'>0.14</text>
+<line x1='415' y1='58' x2='415' y2='294' stroke='#eee'/>
+<text x='415' y='310' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='9' fill='#5c6657' text-anchor='middle'>0.17</text>
+<line x1='548' y1='58' x2='548' y2='294' stroke='#eee'/>
+<text x='548' y='310' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='9' fill='#5c6657' text-anchor='middle'>0.20</text>
+<line x1='680' y1='58' x2='680' y2='294' stroke='#eee'/>
+<text x='680' y='310' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='9' fill='#5c6657' text-anchor='middle'>0.22</text>
+<text x='415' y='328' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='10.5' fill='#5c6657' text-anchor='middle'>count-pooled &#969; (= dN/dS)</text>
+<text x='138' y='74' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='11' fill='#1c231d' text-anchor='end'>a_halleri</text>
+<line x1='150' y1='70' x2='680' y2='70' stroke='#f0f0f0'/>
+<path d='M 346.6 47 l 5 5 l -5 5 l -5 -5 z' fill='#8A6D1D'/>
+<text x='354.6' y='55' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#8A6D1D'>0.157</text>
+<circle cx='375.8' cy='64' r='4.5' fill='#2F5233'/>
+<text x='383.8' y='67' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#2F5233'>0.163</text>
+<rect x='373.4' y='72' width='8' height='8' fill='#5B8A63'/>
+<text x='385.4' y='79' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#5B8A63'>0.163</text>
+<path d='M 579.3 83 l 5 9 l -10 0 z' fill='#A8432E'/>
+<text x='587.3' y='91' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#A8432E'>0.201</text>
+<text x='138' y='148' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='11' fill='#1c231d' text-anchor='end'>a_thaliana</text>
+<line x1='150' y1='144' x2='680' y2='144' stroke='#f0f0f0'/>
+<path d='M 356.7 121 l 5 5 l -5 5 l -5 -5 z' fill='#8A6D1D'/>
+<text x='364.7' y='129' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#8A6D1D'>0.159</text>
+<circle cx='414.5' cy='138' r='4.5' fill='#2F5233'/>
+<text x='422.5' y='141' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#2F5233'>0.170</text>
+<rect x='395.1' y='146' width='8' height='8' fill='#5B8A63'/>
+<text x='407.1' y='153' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#5B8A63'>0.167</text>
+<path d='M 420.3 157 l 5 9 l -10 0 z' fill='#A8432E'/>
+<text x='428.3' y='165' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#A8432E'>0.171</text>
+<text x='138' y='222' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='11' fill='#1c231d' text-anchor='end'>c_grandiflora</text>
+<line x1='150' y1='218' x2='680' y2='218' stroke='#f0f0f0'/>
+<path d='M 349.3 195 l 5 5 l -5 5 l -5 -5 z' fill='#8A6D1D'/>
+<text x='357.3' y='203' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#8A6D1D'>0.158</text>
+<circle cx='313.8' cy='212' r='4.5' fill='#2F5233'/>
+<text x='321.8' y='215' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#2F5233'>0.151</text>
+<rect x='322.0' y='220' width='8' height='8' fill='#5B8A63'/>
+<text x='334.0' y='227' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#5B8A63'>0.153</text>
+<path d='M 360.4 231 l 5 9 l -10 0 z' fill='#A8432E'/>
+<text x='368.4' y='239' font-family='ui-monospace,Menlo,Consolas,monospace' font-size='8' fill='#A8432E'>0.160</text>
+<rect x='28' y='287' width='9' height='9' fill='#8A6D1D'/>
+<text x='41' y='295' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='8.5' fill='#5c6657'>M0 per-species (dS-filtered)</text>
+<rect x='196' y='287' width='9' height='9' fill='#2F5233'/>
+<text x='209' y='295' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='8.5' fill='#5c6657'>2-ratio per-gene pooled (BUSCOmega)</text>
+<rect x='364' y='287' width='9' height='9' fill='#5B8A63'/>
+<text x='377' y='295' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='8.5' fill='#5c6657'>free-ratio per-gene pooled</text>
+<rect x='532' y='287' width='9' height='9' fill='#A8432E'/>
+<text x='545' y='295' font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif' font-size='8.5' fill='#5c6657'>free-ratio concatenate (eLife-style)</text>
+</svg>

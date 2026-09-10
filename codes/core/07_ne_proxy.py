@@ -376,12 +376,18 @@ def main(argv=None) -> int:
 
     omega_m0 = float("nan")
     if m0_path.exists():
-        omega_m0 = pooled_omega(read_records(m0_path))
+        # apply the same dS filter as the per-species numbers, so omega_M0
+        # is comparable to them (an unfiltered M0 is dragged around by the
+        # handful of mis-aligned genes the ceiling exists to remove)
+        m0_all = read_records(m0_path)
+        m0_kept = [r for r in m0_all
+                   if r.qc != "ds_floor" and r.dS <= args.ds_ceiling]
+        omega_m0 = pooled_omega(m0_kept)
 
     if not tr_paths:
         # M0-only: no per-species proxy is possible, but the genome-wide
         # pooled omega is still a usable number.
-        m0_rows = read_records(m0_path)
+        m0_rows = m0_kept
         lo, hi = bootstrap_ci(m0_rows, args.bootstrap, args.seed)
         (args.out_dir / "ne_proxy.tsv").write_text(
             "scope\tomega_pooled\tci_lo\tci_hi\tn_genes\n"

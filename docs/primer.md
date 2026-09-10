@@ -412,9 +412,9 @@ Pooled ω, with 95 % gene-bootstrap CI:
 
 | species | pooled ω | 95 % CI | genes used | M0 |
 |---|---|---|---|---|
-| a_halleri | 0.163 | 0.152 – 0.174 | 368 (−1 dS>1.5) | 0.132 |
-| a_thaliana | 0.170 | 0.158 – 0.183 | 368 (−1) | 0.132 |
-| c_grandiflora | 0.151 | 0.135 – 0.165 | 314 (−53 ds_floor, −2 dS>1.5) | 0.132 |
+| a_halleri | 0.163 | 0.152 – 0.174 | 368 (−1 dS>1.5) | 0.158 |
+| a_thaliana | 0.170 | 0.158 – 0.183 | 368 (−1) | 0.158 |
+| c_grandiflora | 0.151 | 0.135 – 0.165 | 314 (−53 ds_floor, −2 dS>1.5) | 0.158 |
 
 Three readings, all worth stating:
 

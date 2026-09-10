@@ -1,0 +1,7 @@
+method	a_halleri	a_thaliana	c_grandiflora	note
+M0 per-species (dS-filtered)	0.1571	0.1590	0.1576	one omega tree-wide; the constrained baseline
+M0 concatenate	0.1708	0.1708	0.1708	one omega on all 369 genes joined (563 kb)
+2-ratio per-gene pooled -- BUSCOmega	0.1626	0.1699	0.1509	model=2, focal species foreground, count-pooled
+free-ratio per-gene pooled	0.1629	0.1670	0.1532	model=1 per gene, focal terminal branch pooled
+free-ratio concatenate (eLife-style, NOT pre-filtered)	0.2010	0.1710	0.1597	model=1 once on the concatenate; the ~2 mis-aligned genes inflate a_halleri
+M0 per-species (unfiltered)	0.1825	0.1598	0.1086	shows what the dS ceiling removes

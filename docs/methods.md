@@ -885,10 +885,14 @@ report `n_excl_ds_ceiling`; do not raise it, which only readmits
 untrustworthy denominators.
 
 **M0 baseline.** `omega_M0` in the output is the genome-wide pooled ω from
-the M0 run (pooled over every branch of every gene). It is the
-sanity-check / LRT-null number, not a per-species value, and appears in
-every row of `ne_proxy.tsv`. If there are no `two_ratio.*` tables at all,
-Stage 7 emits just this one genome-wide number.
+the M0 run, pooled over every branch of every gene **and passed through the
+same `ds_floor` / `--ds-ceiling` filter as the per-species numbers** — so
+it is directly comparable to them (an unfiltered M0 is dragged around by
+the handful of mis-aligned genes the ceiling exists to remove; on the pilot
+that was the difference between 0.132 and 0.158). It is the sanity-check /
+LRT-null number, not a per-species value, and appears in every row of
+`ne_proxy.tsv`. If there are no `two_ratio.*` tables at all, Stage 7 emits
+just this one genome-wide number.
 
 **Uncertainty — the gene bootstrap** (`--bootstrap`, default 1000,
 `--seed`): resample genes with replacement, recompute pooled ω, take the
@@ -916,14 +920,24 @@ lineages → no evidence their Nₑ differ.
 
 | species | pooled ω | 95 % CI | genes used | M0 |
 |---|---|---|---|---|
-| a_halleri | 0.163 | 0.152 – 0.174 | 368 (−1 dS>1.5) | 0.132 |
-| a_thaliana | 0.170 | 0.158 – 0.183 | 368 (−1) | 0.132 |
-| c_grandiflora | 0.151 | 0.135 – 0.165 | 314 (−53 ds_floor, −2 dS>1.5) | 0.132 |
+| a_halleri | 0.163 | 0.152 – 0.174 | 368 (−1 dS>1.5) | 0.158 |
+| a_thaliana | 0.170 | 0.158 – 0.183 | 368 (−1) | 0.158 |
+| c_grandiflora | 0.151 | 0.135 – 0.165 | 314 (−53 ds_floor, −2 dS>1.5) | 0.158 |
 
 CIs mostly overlap → no strong Nₑ signal among the three, as expected for
 close relatives. The dS-ceiling filter was load-bearing: a_halleri and
 a_thaliana each carried one gene with dS ≈ 70 (a mis-alignment) that on its
 own dropped the pooled ω to ~0.035. Output in `examples/pilot_stage7_out/`.
+
+**Robustness to the branch model** (`analysis/findings.md`). Estimating the
+same per-species ω with the **free-ratio** model (`model=1`, every branch
+its own ω) instead of the two-ratio model, per gene and pooled the same
+way, gives 0.163 / 0.167 / 0.153 — within ~2 % of the two-ratio numbers.
+The branch-model constraint introduces no bias. Estimating on a
+concatenate (the eLife / Galtier-lab route) agrees too *once the same genes
+are filtered*; skip the filter and the two dS ≈ 70 genes inflate
+a_halleri's concatenate ω to 0.20. The QC placement differs (per-gene at
+pooling here, per-gene before concatenation there); the effect is the same.
 
 The pooled ω is stable to ±0.001 across re-runs. The exact `ds_floor` count
 for a deep lineage is not: c_grandiflora came back with 53 dropped genes on
