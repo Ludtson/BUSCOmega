@@ -13,34 +13,50 @@ the same job the concatenation-based papers do by pre-filtering genes.
 369 BUSCO genes, *A. halleri* / *A. thaliana* / *C. grandiflora*,
 `viridiplantae_odb10`. Per-species terminal-branch ω, count-pooled:
 
-| method | a_halleri | a_thaliana | c_grandiflora |
-|---|---|---|---|
-| M0, per-species (dS-filtered) | 0.157 (n=367) | 0.159 (n=367) | 0.158 (n=366) |
-| M0, concatenate | 0.171 | 0.171 | 0.171 |
-| **2-ratio, per-gene pooled — BUSCOmega** | **0.163 (n=368)** | **0.170 (n=368)** | **0.151 (n=306)** |
-| free-ratio (`model=1`), per-gene pooled | 0.163 (n=366) | 0.167 (n=368) | 0.153 (n=328) |
-| free-ratio, concatenate (eLife-style, *not* pre-filtered) | 0.201 (n=369) | 0.171 (n=369) | 0.160 (n=369) |
+| method | codeml model | layout | a_halleri | a_thaliana | c_grandiflora | genes used |
+|---|---|---|---|---|---|---|
+| M0, per-species (dS-filtered) | model=0 | per-gene, pooled | 0.157 | 0.159 | 0.158 | 367 / 367 / 366 |
+| **2-ratio, per-gene pooled — BUSCOmega** | model=2 | per-gene, pooled | **0.163** | **0.170** | **0.151** | 368 / 368 / 306 |
+| free-ratio, per-gene pooled | model=1 | per-gene, pooled | 0.163 | 0.167 | 0.153 | 366 / 368 / 328 |
+| free-ratio, concatenate — no filter | model=1 | one alignment | 0.201 | 0.171 | 0.160 | 369 |
+| free-ratio, concatenate — misalignment-filtered (≈ eLife) | model=1 | one alignment | 0.163 | 0.167 | 0.158 | 364 |
+| free-ratio, concatenate — strict over-filter | model=1 | one alignment | 0.163 | 0.179 | 0.000 ⚠ | 187 |
 
-`n` = genes contributing after the `ds_floor` / `--ds-ceiling` filter.
+**"Free model" = codeml `model=1`** — every branch gets its own ω. It is a
+*model* choice, independent of per-gene vs concatenate. The actual eLife /
+Galtier-lab method (bio++ substitution counting, not codeml) is closest in
+*layout* to free-ratio on a concatenate, but it uses a counting method and
+it **pre-filters genes**. The "no filter" concatenate row here is a
+deliberately broken version, to show what skipping QC does.
 
-### Why the gene counts differ between methods
+`genes used` is per species where it varies (the per-gene methods filter
+per species); a single number where all species share one alignment.
 
-The filters key off each gene's **estimated dS on that species' branch**, and
-each model estimates dS differently, so different genes cross the thresholds:
+### Why the gene counts differ
 
-- **M0** fixes ω tree-wide, so dS on a terminal branch is essentially its
-  branch length — almost every gene is usable (366–367 / 369).
-- **2-ratio / free-ratio for *C. grandiflora*** keep only 306 / 328. On a
-  3-taxon tree the model cannot constrain the deep outgroup branch for
-  every gene: for ~60 genes the foreground branch collapses to dS ≈ 0 and
-  is filtered as `ds_floor`. This is a **small-sample artifact** — at 23
-  taxa the outgroup branches have neighbours that constrain them and the
-  collapse largely disappears.
-- The pooled ω is barely affected regardless (0.151 with 306 genes vs 0.158
-  for M0 with 366) — the collapsed genes carry almost no synonymous
-  substitution, so they contribute almost nothing to the pool.
+Only **5 genes are genuinely bad** — mis-aligned, dS > 1.5 on some branch
+(`144680at33090`, `162794at33090`, `165103at33090`, `192456at33090`,
+`5305at33090`). Everything else is a usable gene.
 
-![method comparison](method_comparison.svg)
+The rest of the drops are **model artifacts, not gene-quality problems**:
+
+- The dS filters look at each gene's *estimated dS on that species' branch*,
+  and each model estimates dS differently, so different genes cross the
+  thresholds.
+- **M0** fixes ω tree-wide → dS on a terminal branch ≈ its length →
+  almost every gene usable (366–367 / 369).
+- **2-ratio / free-ratio for *C. grandiflora*** keep only 306 / 328.
+  On a 3-taxon tree the deep outgroup branch cannot be constrained for
+  every gene, so ~60–170 genes collapse to dS ≈ 0 and are flagged
+  `ds_floor`. **Small-sample artifact** — at 23 taxa every branch has
+  neighbours to pin it and the collapse largely goes away.
+- The **concatenate** uses one gene set for all three species, so its
+  count is a single number. It handles the outgroup badly at 3 taxa in a
+  different way: over-filter to only the "perfectly clean" 187 genes and
+  *C. grandiflora*'s terminal branch collapses (a rooting confound — with
+  only 3 branches, codeml can shift the outgroup's divergence onto the
+  internal branch). The per-gene + pool approach does not have this
+  problem because each gene's outgroup branch is estimated on its own.
 
 ## Reading it
 

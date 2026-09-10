@@ -12,7 +12,7 @@ METHODS = [
     ("M0 per-species (dS-filtered)",            "#8A6D1D", "d"),
     ("2-ratio per-gene pooled (BUSCOmega)",     "#2F5233", "o"),
     ("free-ratio per-gene pooled",              "#5B8A63", "s"),
-    ("free-ratio concatenate (eLife-style)",    "#A8432E", "^"),
+    ("free-ratio concat, misalignment-filtered (approx eLife)", "#A8432E", "^"),
 ]
 SPECIES = ["a_halleri", "a_thaliana", "c_grandiflora"]
 
@@ -27,8 +27,8 @@ NG = {
     "2-ratio per-gene pooled (BUSCOmega)":
         ngenes["2-ratio per-gene pooled -- BUSCOmega"],
     "free-ratio per-gene pooled": ngenes["free-ratio per-gene pooled"],
-    "free-ratio concatenate (eLife-style)":
-        ngenes["free-ratio concatenate (eLife-style, NOT pre-filtered)"],
+    "free-ratio concat, misalignment-filtered (approx eLife)":
+        ngenes["free-ratio concatenate -- misalignment-filtered (approx eLife)"],
 }
 
 VALS = {
@@ -36,8 +36,8 @@ VALS = {
     "2-ratio per-gene pooled (BUSCOmega)":
         rows["2-ratio per-gene pooled -- BUSCOmega"],
     "free-ratio per-gene pooled": rows["free-ratio per-gene pooled"],
-    "free-ratio concatenate (eLife-style)":
-        rows["free-ratio concatenate (eLife-style, NOT pre-filtered)"],
+    "free-ratio concat, misalignment-filtered (approx eLife)":
+        rows["free-ratio concatenate -- misalignment-filtered (approx eLife)"],
 }
 
 W, H = 720, 340
