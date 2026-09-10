@@ -55,6 +55,7 @@ __version__ = "0.1.0"
 __author__ = "Adekolá Owoyemi (Protein Evolution Lab / Casola Lab, Texas A&M University)"
 
 import argparse
+import math
 import random
 import shutil
 import statistics as st
@@ -270,6 +271,71 @@ def dist_plot(annot_by_sp: dict, pooled_by_sp: dict, path: Path) -> None:
     path.write_text(_svg(W, H, "".join(b)), encoding="utf-8")
 
 
+def _chi2_1_pdf(x: float) -> float:
+    return 0.0 if x <= 0 else math.exp(-x / 2) / math.sqrt(2 * math.pi * x)
+
+
+def lrt_plot(lrt_by_sp: dict, stats_by_sp: dict, path: Path) -> None:
+    """Per-species: per-gene LRT (2-ratio vs M0) histogram vs the chi2(1) null."""
+    sp = list(lrt_by_sp)
+    if not sp or not any(lrt_by_sp.values()):
+        path.write_text(_svg(400, 80, f"<text x='20' y='45' {SANS} "
+                        f"font-size='13' fill='{DIM}'>no LRT data (M0 records "
+                        f"missing)</text>"), encoding="utf-8")
+        return
+    W, ph, pad = 700, 138, 56
+    H = pad + ph * len(sp) + 26
+    x0, x1 = 56, W - 20
+    XMAX, NB = 12.0, 30
+    b = [f"<text x='22' y='24' {SANS} font-size='13' font-weight='700' "
+         f"fill='{INK}'>Lineage effect: per-gene LRT (2-ratio vs M0) vs the "
+         f"&#967;&#178;(1) null</text>",
+         f"<text x='22' y='41' {SANS} font-size='10.5' fill='{DIM}'>"
+         f"No lineage effect &#8594; bars follow the curve, ~5% of genes "
+         f"past 3.84.</text>"]
+    for k, s in enumerate(sp):
+        top = pad + k * ph
+        base = top + ph - 30
+        vals = [max(0.0, v) for v in lrt_by_sp[s]]
+        n = len(vals)
+        bw = (x1 - x0) / NB
+        bins = [0] * NB
+        for v in vals:
+            bins[min(NB - 1, int(v / XMAX * NB))] += 1
+        mx = max(bins) or 1
+        b.append(f"<text x='{x0}' y='{top}' {MONO} font-size='10' "
+                 f"font-weight='700' fill='{INK}'>{s}</text>")
+        for i, c in enumerate(bins):
+            hh = c / mx * (ph - 44)
+            b.append(f"<rect x='{x0+i*bw:.1f}' y='{base-hh:.1f}' "
+                     f"width='{bw-1:.1f}' height='{hh:.1f}' fill='#cbd6cb'/>")
+        pts = []
+        for j in range(1, 220):
+            xx = j / 220 * XMAX
+            yy = base - _chi2_1_pdf(xx) * n * (XMAX / NB) / mx * (ph - 44)
+            pts.append(f"{x0 + xx/XMAX*(x1-x0):.1f},{max(top+6, yy):.1f}")
+        b.append(f"<polyline points='{' '.join(pts)}' fill='none' "
+                 f"stroke='{ACC}' stroke-width='1.7'/>")
+        xt = x0 + 3.841 / XMAX * (x1 - x0)
+        b.append(f"<line x1='{xt:.1f}' y1='{top+6}' x2='{xt:.1f}' y2='{base}' "
+                 f"stroke='#a8432e' stroke-width='1.3' stroke-dasharray='3 2'/>")
+        b.append(f"<line x1='{x0}' y1='{base}' x2='{x1}' y2='{base}' "
+                 f"stroke='{DIM}'/>")
+        for gx in (0, 3.841, 8, 12):
+            b.append(f"<text x='{x0 + gx/XMAX*(x1-x0):.0f}' y='{base+13}' "
+                     f"{MONO} font-size='8' fill='{DIM}' "
+                     f"text-anchor='middle'>{gx:g}</text>")
+        st_ = stats_by_sp[s]
+        b.append(f"<text x='{x1}' y='{top}' {MONO} font-size='8.5' fill='{INK}' "
+                 f"text-anchor='end'>{st_['n_sig']}/{st_['n']} p&lt;0.05 "
+                 f"({st_['frac']:.1%}, exp 5%) &#183; mean {st_['mean']:.2f} "
+                 f"(exp 1.0)</text>")
+    b.append(f"<text x='{(x0+x1)/2:.0f}' y='{H-6}' {SANS} font-size='9.5' "
+             f"fill='{DIM}' text-anchor='middle'>2 &#215; (lnL 2-ratio "
+             f"&#8722; lnL M0)</text>")
+    path.write_text(_svg(W, H, "".join(b)), encoding="utf-8")
+
+
 def omega_vs_t_plot(points: list, path: Path) -> None:
     # points: (species, mean_t, omega_pooled)
     W, H = 560, 360
@@ -419,6 +485,7 @@ def main(argv=None) -> int:
                   "frac_lrt_p05\tmean_lrt"]
     per_gene = ["species\tgene_id\tN\tS\tdN\tdS\tomega\tt\tqc_flag\tused\texcl_reason"]
     forest, dists, pooled_by_sp, tvst = {}, {}, {}, []
+    lrt_by_sp, lrt_stats = {}, {}
 
     for p in tr_paths:
         species = p.name[len("two_ratio."):-len("_records.tsv")]
@@ -446,6 +513,10 @@ def main(argv=None) -> int:
         n_sig = sum(1 for x in lrts if x > CHI2_1DF_P05)
         frac_sig = n_sig / n_lrt if n_lrt else float("nan")
         mean_lrt = st.fmean(lrts) if lrts else float("nan")
+        if lrts:
+            lrt_by_sp[species] = lrts
+            lrt_stats[species] = dict(n=n_lrt, n_sig=n_sig, frac=frac_sig,
+                                      mean=mean_lrt)
 
         proxy_rows.append(
             f"{species}\t{om:.6f}\t{lo:.6f}\t{hi:.6f}\t{len(used)}\t"
@@ -476,6 +547,7 @@ def main(argv=None) -> int:
     forest_plot(forest, omega_m0, plots / "ne_proxy_forest.svg")
     dist_plot(dists, pooled_by_sp, plots / "omega_per_gene_dist.svg")
     omega_vs_t_plot(tvst, plots / "omega_vs_divergence.svg")
+    lrt_plot(lrt_by_sp, lrt_stats, plots / "lineage_effect_lrt.svg")
     n_png = 0
     if args.png:
         for svg in sorted(plots.glob("*.svg")):
