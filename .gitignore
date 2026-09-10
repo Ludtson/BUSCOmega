@@ -41,3 +41,4 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+docs/figures/_pipeline_autogen.svg

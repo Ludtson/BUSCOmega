@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""Regenerate the primer SVGs in this directory from the pilot numbers
-embedded below. Stdlib only.  python docs/figures/_generate.py"""
+"""Regenerate the figures in this directory from the pilot numbers embedded
+below. Stdlib only.  python docs/figures/_generate.py
+
+NOTE: pipeline.svg is hand-finished in Inkscape (cleaner phylo glyphs in
+stages 4-5). This script writes the machine base to _pipeline_autogen.svg;
+it does NOT overwrite pipeline.svg. If you change the layout here, diff the
+two and re-apply the Inkscape touch-ups."""
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent
@@ -391,7 +396,7 @@ def fig_pipeline():
              f"run_buscomega.py orchestrates all seven &#183; runs 3 to "
              f"hundreds of taxa, any clade</text>")
     s.append("</svg>")
-    (OUT / "pipeline.svg").write_text("\n".join(s), encoding="utf-8")
+    (OUT / "_pipeline_autogen.svg").write_text("\n".join(s), encoding="utf-8")
 
 
 fig_estimators()
