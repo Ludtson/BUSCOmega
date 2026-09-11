@@ -1,63 +1,83 @@
-Documentation for BUSCO Analysis Bash Script
-Overview
-The run_busco.sh script automates the process of running BUSCO (Benchmarking Universal Single-Copy Orthologs) on a set of FASTA files and generates a summary table of the results. It includes utility checks, directory validations, and parallel processing to enhance performance.
+# run_busco.py — run BUSCO across species (prerequisite)
 
-Dependencies
-BUSCO: The main tool for benchmarking single-copy orthologs.
-GNU Parallel: For parallel processing of multiple FASTA files.
-Python: To run the summary table generation script.
-curl: To download BUSCO lineage data.
-tar: To extract downloaded lineage data.
-Installation
-Install BUSCO:
-conda install -c bioconda busco
+**Optional.** BUSCOmega's Stage 1 starts from BUSCO's own `full_table.tsv`
+per species. If you already have BUSCO output, skip this entirely. If you
+don't, this runs it for you — in parallel, with a manifest and a resume
+mode.
 
-Install GNU Parallel:
-sudo apt-get install parallel
+Rewritten in Python from the original toolkit's `run_busco.sh`, now in
+`codes/legacy/`. The reasoning is the same as for the 7 core stages: a real
+work queue instead of fixed-size `&`/`wait` batches, a manifest, one
+species' failure doesn't kill the run, and it's testable.
 
-Install Python 3:
-sudo apt-get install python3
+## Dependencies
 
-Download BUSCO Lineage Data:
-curl https://busco-data.ezlab.org/v5/data/lineages/viridiplantae_odb10.2024-01-08.tar.gz --output ./busco/viridiplantae_odb10.2024-01-08.tar.gz
-tar -xvf viridiplantae_odb10.2024-01-08.tar.gz -C /scratch/user/ludtson/busco_downloads/lineages
-Note: The lineage data URL and file name will vary depending on the specific lineage you are working with. Adjust the URL and file name accordingly.
+`busco` (>=5.5) on `PATH`. Deliberately **not** in the core `buscomega`
+conda env — most users already have BUSCO output, and it pulls a large
+dependency tree (hmmer, metaeuk, augustus/miniprot). Add it if you need it:
 
-Script Usage
-Save the script as run_busco.sh.
-Ensure You Have the busco_summary.py
-Run the Bash Script:
-run_busco.sh /path/to/fasta/files /path/to/output /path/to/lineage genome 4
+```bash
+conda install -n buscomega -c bioconda 'busco>=5.5'
+```
 
-This command will:
-Check for required utilities and directories.
-Run BUSCO on each FASTA file in parallel.
-Generate a summary table of the BUSCO results and save it as busco_summary.csv in the output directory.
+or keep BUSCO in its own environment and just put it on `PATH` when you
+run this script.
 
-Parameters for run_busco.sh Script
-Directory with FASTA Files:
-    Description: The path to the directory containing the FASTA files you want to analyze with BUSCO.
-    Example: /path/to/fasta/files
-Desired Output Directory:
-    Description: The path to the directory where you want to save the BUSCO output results.
-    Example: /path/to/output
-Lineage Directory:
-    Description: The path to the directory containing the BUSCO lineage data. This data is necessary for BUSCO to perform its analysis.
-    Example: /path/to/lineage
-    Note: You can download the lineage data using the following commands:
-        url https://busco-data.ezlab.org/v5/data/lineages/viridiplantae_odb10.2024-01-08.tar.gz --output ./busco/viridiplantae_odb10.2024-01-08.tar.gz
-        tar -xvf viridiplantae_odb10.2024-01-08.tar.gz -C /scratch/user/ludtson/busco_downloads/lineages
-FASTA Data Type:
-    Description: The type of data in the FASTA files. This can be genome, protein, or transcript.
-    Example: genome
-Number of Cores to Use (default is 1):
-    Description: The number of CPU cores to use for running BUSCO. If not specified, the script will use 1 core by default.
-    Example: 4
+You also need a **pre-downloaded lineage dataset** — this script runs
+BUSCO `--offline`:
 
-Example Command
-bash run_busco.sh /path/to/fasta/files /path/to/output /path/to/lineage genome 4
+```bash
+curl -L https://busco-data.ezlab.org/v5/data/lineages/viridiplantae_odb10.2024-01-08.tar.gz \
+    -o viridiplantae_odb10.tar.gz
+tar -xzf viridiplantae_odb10.tar.gz
+# -> pass the extracted directory as --lineage
+```
 
-This command will:
-    Check for required utilities and directories.
-    Run BUSCO on each FASTA file in parallel using 4 cores.
-    Generate a summary table of the BUSCO results and save it as busco_summary.csv in the output directory.
+## Usage
+
+```bash
+python run_busco.py <fasta_dir> -o <out_dir> \
+    --lineage <lineage_dir> --mode protein \
+    --jobs 4 --threads 6
+```
+
+| argument | meaning |
+|---|---|
+| `fasta_dir` | one `<species>.{faa,fa,fna,fasta}` per species. Species name = filename up to the first dot. |
+| `--lineage` | the extracted lineage dataset directory (see above) |
+| `--mode` | `genome` \| `protein` \| `transcriptome`. Use **`protein`** — that's what BUSCOmega's input contract expects (isoform-cleaned proteomes; see `docs/methods.md` "Input contract"). |
+| `--jobs` | species run concurrently (default 1) |
+| `--threads` | `--cpu` passed to each BUSCO call (default 4). Total cores used = `jobs x threads` — same convention as Stage 3. |
+| `--resume` | skip a species that already has a `full_table.tsv` under `<out_dir>/<species>/` |
+
+## What it does
+
+Per species, in a worker pool of size `--jobs`:
+
+```
+busco --offline --in <fasta> --cpu <threads> \
+      --lineage_dataset <lineage> --mode <mode> \
+      --out <species> --out_path <out_dir> --force
+```
+
+captures stdout+stderr to `<out_dir>/logs/<species>.log`, and checks for a
+resulting `full_table.tsv` to decide `ok` vs `failed`. A failed species is
+logged and the run continues — it does not stop the other species.
+
+## Outputs (into `--out-dir`)
+
+- `<species>/run_<lineage>/full_table.tsv` — BUSCO's own output; this is
+  what Stage 1 (`01_common_scos.py`) reads
+- `logs/<species>.log` — that species' full BUSCO stdout+stderr
+- `busco_run_manifest.tsv` — `species status elapsed_s complete_pct`
+- `busco_summary.csv` — via `busco_summary.py`, run automatically at the
+  end if at least one species succeeded
+- `busco_run.log` — one timestamped start/done line (same `stageN.log`
+  shape as the core stages)
+
+## Test
+
+`tests/test_run_busco.py` — species discovery, `--resume` skipping,
+per-species drop-and-continue on a BUSCO failure, `complete_pct` parsing,
+and the manifest — with `busco` replaced by a fake (the binary is not
+assumed present in CI).

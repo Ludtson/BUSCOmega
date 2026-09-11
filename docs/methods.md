@@ -11,7 +11,7 @@ Pipeline shape:
 ```
 [LINGUA Stage 1: cleaned, ID-matched proteomes + CDS]   <- upstream, not part of this tool
         |
-   BUSCO (protein mode)   <- prerequisite, prep_optional/run_busco.sh
+   BUSCO (protein mode)   <- prerequisite, prep_optional/run_busco.py
         |
    Stage 1  common single-copy BUSCO set          -> common_scos.tsv
    Stage 2  per-gene multi-species protein + CDS   -> prt/ , cds/
@@ -36,8 +36,8 @@ already chains 5 -> 6 -> 7 via `--stage5-dir`.
 
 | stage | script | status | in -> out |
 |---|---|---|---|
-| prereq | `prep_optional/run_busco.sh` | recovered | proteome FASTAs + lineage DB -> per-species BUSCO folders (`full_table.tsv`). Only run if BUSCO output does not already exist. |
-| prereq | `prep_optional/busco_summary.py` | recovered | helper called by `run_busco.sh`; scrapes BUSCO summary files to one CSV. |
+| prereq | `prep_optional/run_busco.py` | done | proteome FASTAs + lineage DB -> per-species BUSCO folders (`full_table.tsv`), in parallel, with a manifest + `--resume`. Only run if BUSCO output does not already exist. |
+| prereq | `prep_optional/busco_summary.py` | recovered | helper called by `run_busco.py`; scrapes BUSCO summary files to one CSV. |
 | prereq | `prep_optional/species_tree.py` | done | clean an existing Newick (`prepare`) or build a supermatrix + run IQ-TREE (`infer`) → a topology for Stage 4. Optional; `infer --run-iqtree` needs IQ-TREE 2. |
 | 1 | `core/01_common_scos.py` | done | the `full_table.tsv` files -> `common_scos.tsv` (single-copy in every species + per-species protein ID) + `busco_status_summary.tsv` |
 | 2 | `core/02_extract_sco_seqs.py` | done | `common_scos.tsv` + per-species protein & CDS FASTAs -> one protein file + one CDS file per gene, each with all species |
@@ -50,6 +50,7 @@ already chains 5 -> 6 -> 7 via `--stage5-dir`.
 | — | `legacy/busco_seq_extractor.py` | superseded | old Stage 2 (fuzzy substring ID matching); replaced by `02_extract_sco_seqs.py` |
 | — | `legacy/run_mafft.sh`, `legacy/run_pal2nal.sh` | superseded | old Stage 3 (two bash scripts, timestamped outputs, `-nogap -nomismatch`); replaced by `03_codon_align.py` |
 | — | `legacy/generate_codeml_control.py` | superseded | old Stage 4 (one timestamp-named `.ctrl` per gene, `cleandata=0`, no 2-ratio); replaced by `04_codeml_control.py` |
+| — | `legacy/run_busco.sh` | superseded | old BUSCO runner (sequential loop, or fixed-size `&`/`wait` batches in an earlier variant; no manifest, no resume); replaced by `run_busco.py` |
 | — | `not_used_here/sort_phytozome_files.sh` | not this project | organizes a Phytozome download; belongs to the broader toolkit |
 
 ---
@@ -105,7 +106,7 @@ What you supply per clade:
 
 | input | where | example |
 |---|---|---|
-| BUSCO lineage dataset | prerequisite (`prep_optional/run_busco.sh`) | `fungi_odb10`, `vertebrata_odb10`, `viridiplantae_odb10` |
+| BUSCO lineage dataset | prerequisite (`prep_optional/run_busco.py`) | `fungi_odb10`, `vertebrata_odb10`, `viridiplantae_odb10` |
 | species tree (topology) | `04_codeml_control.py --tree` | your own Newick, any tip count ≥ 3; `prep_optional/species_tree.py` helps you clean or infer one |
 | focal species | `04_codeml_control.py --focal` (default: every tip) | a subset if you only need some lineages |
 | genetic code | `04_codeml_control.py --icode` (default `0`, universal) | `--icode 4` for some protists / organellar data |
@@ -406,7 +407,7 @@ species, **369 common single-copy genes** (the older pipeline got 368).
 `a_thaliana` is cleanest (reference genome); `a_halleri` carries more
 duplicates/missing; `c_grandiflora` more fragmented — none disqualifying.
 
-**Not this script's job:** running BUSCO (that is `prep_optional/run_busco.sh`,
+**Not this script's job:** running BUSCO (that is `prep_optional/run_busco.py`,
 a prerequisite), and pulling the actual sequences (Stage 2).
 
 ---

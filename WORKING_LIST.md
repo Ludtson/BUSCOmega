@@ -57,7 +57,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[?]` open decis
   `legacy/` — `merge_busco_table.py`, `busco_seq_extractor.py`,
   `run_mafft.sh`, `run_pal2nal.sh`, `generate_codeml_control.py`,
   `run_codeml.sh` (all superseded);
-  `prep_optional/` — `run_busco.sh`, `busco_summary.py`, `species_tree.py`
+  `prep_optional/` — `run_busco.py`, `busco_summary.py`, `species_tree.py`
   (only needed for setup — BUSCO run, species tree — not part of the core
   tool);
   `not_used_here/` — `sort_phytozome_files.sh` (Phytozome-download-specific,
@@ -304,6 +304,15 @@ crushed the estimate to ~0.035.
   Matters for the multi-day 21+2 `brassicales_odb10` run.
 - `[ ]` Stage 3 `--mafft-extra` passthrough for power users.
 - `[ ]` Stage 1 `--rescue-fragments <pct>` (deferred earlier).
+- `[x]` **`prep_optional/run_busco.py`** (2026-09-11) — rewrote the
+  BUSCO-runner prerequisite in Python, picked from the two `run_busco.sh`
+  variants recovered in `codes.zip` (sequential loop; fixed-size `&`/`wait`
+  parallel batches). Real work queue (`ProcessPoolExecutor`, `--jobs` x
+  `--threads`, same convention as the core stages) instead of wait-batches
+  that idle on the slowest job; per-species drop-and-continue on a BUSCO
+  failure; `--resume`; a manifest (`species status elapsed_s complete_pct`);
+  calls `busco_summary.py` at the end. Old `.sh` variants → `codes/legacy/`.
+  `tests/test_run_busco.py` (busco faked). `run_busco.md` rewritten.
 - Note: the H5 regression (ω vs per-species DNG count) is Chapter 3 stats,
   not BUSCOmega — Stage 7 just emits the per-species table.
 
