@@ -915,12 +915,21 @@ inside each other's CIs.
 
 - `ne_proxy.tsv` — `species omega_pooled ci_lo ci_hi n_genes
   n_excl_ds_floor n_excl_ds_ceiling mean_omega median_omega mean_t
-  omega_M0 n_lrt n_lrt_p05 frac_lrt_p05 mean_lrt`
+  omega_M0 omega_M0_ci_lo omega_M0_ci_hi n_lrt n_lrt_p05 frac_lrt_p05
+  mean_lrt`
 - `per_gene_omega.tsv` — long: `species gene_id N S dN dS omega t qc_flag
   used excl_reason`. Every gene, kept or dropped, with the reason.
-- `plots/ne_proxy_forest.svg` — per-species pooled ω + CI, with the M0 line
-- `plots/omega_per_gene_dist.svg` — the per-gene ω histogram per species
-  (the shape that motivates pooling)
+- `plots/ne_proxy_forest.svg` — per-species pooled ω + 95 % CI, against the
+  **M0 baseline's own 95 % CI** (a shaded band, gene-bootstrapped the same
+  way as the per-species numbers). An earlier version drew M0 as a bare
+  line — misleading, since M0 is an estimate too, not a known constant;
+  drawing species with whiskers and the baseline without them overstates
+  how certain the baseline is.
+- `plots/omega_per_gene_dist.svg` — the per-gene ω histogram per species,
+  with the pooled 2-ratio estimate marked (the shape that motivates
+  pooling — read together with primer §8)
+- `plots/lineage_effect_lrt.svg` — the per-gene LRT (2-ratio vs M0)
+  histogram against the χ²(1) null density, per species
 - `plots/omega_vs_divergence.svg` — pooled ω vs mean branch length
 - `plots/*.png` — only with `--png` (see "Figure output")
 - `stage7.log`

@@ -177,7 +177,7 @@ def filter_focal(rows: list[Row], species: str, ds_ceiling: float):
 # --------------------------------------------------------------------------
 # minimal SVG plotting
 # --------------------------------------------------------------------------
-INK, DIM, ACC = "#1c231d", "#5c6657", "#31607d"
+INK, DIM, ACC, GD = "#1c231d", "#5c6657", "#31607d", "#8a6d1d"
 SANS = "font-family='ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif'"
 MONO = "font-family='ui-monospace,Menlo,Consolas,monospace'"
 
@@ -187,12 +187,20 @@ def _svg(w, h, body: str) -> str:
             f"<rect width='{w}' height='{h}' fill='#ffffff'/>{body}</svg>")
 
 
-def forest_plot(rows_by_sp: dict, m0: float, path: Path) -> None:
+def forest_plot(rows_by_sp: dict, m0: float, m0_ci: tuple[float, float],
+                path: Path) -> None:
+    """Per-species pooled omega + 95% CI, against M0's OWN 95% CI (a band,
+    not a bare line) -- M0 is an estimate too, not a known constant, and
+    drawing it as a sharp line while species get whiskers overstates how
+    certain the baseline is."""
     sp = list(rows_by_sp)
     vals = [rows_by_sp[s] for s in sp]           # (omega, lo, hi)
     xs = [v for tup in vals for v in tup if v == v]        # drop NaN
+    m0_lo, m0_hi = m0_ci
     if m0 == m0:
         xs.append(m0)
+    if m0_lo == m0_lo:
+        xs += [m0_lo, m0_hi]
     if not xs:
         path.write_text(_svg(400, 80,
             f"<text x='20' y='45' {SANS} font-size='13' fill='{DIM}'>"
@@ -201,20 +209,29 @@ def forest_plot(rows_by_sp: dict, m0: float, path: Path) -> None:
     xmin, xmax = min(xs) * 0.9, max(xs) * 1.1
     if xmax - xmin < 1e-9:
         xmin, xmax = xmin * 0.5, xmax * 1.5 + 1e-6
-    W, H = 620, 60 + 34 * len(sp)
+    W, H = 640, 78 + 34 * len(sp)
     x0, x1 = 150, W - 30
+    top, bot = 44, H - 16
 
     def px(v):
         return x0 + (v - xmin) / (xmax - xmin) * (x1 - x0)
 
-    b = [f"<text x='24' y='28' {SANS} font-size='14' font-weight='700' "
-         f"fill='{INK}'>Ne proxy per species (count-pooled &#969;, 95% CI)</text>"]
+    b = [f"<text x='24' y='24' {SANS} font-size='14' font-weight='700' "
+         f"fill='{INK}'>Ne proxy per species (count-pooled &#969;, 95% CI) "
+         f"vs the M0 baseline (its own 95% CI)</text>"]
+    if m0_lo == m0_lo:      # M0 has a CI -> a shaded band, not a bare line
+        b.append(f"<rect x='{px(m0_lo):.1f}' y='{top}' "
+                 f"width='{px(m0_hi)-px(m0_lo):.1f}' height='{bot-top}' "
+                 f"fill='{GD}' fill-opacity='0.14'/>")
     if m0 == m0:
-        b.append(f"<line x1='{px(m0):.1f}' y1='42' x2='{px(m0):.1f}' y2='{H-16}' "
-                 f"stroke='{DIM}' stroke-dasharray='3 3'/>")
+        b.append(f"<line x1='{px(m0):.1f}' y1='{top}' x2='{px(m0):.1f}' "
+                 f"y2='{bot}' stroke='{GD}' stroke-width='1.6' "
+                 f"stroke-dasharray='3 3'/>")
+        m0_lab = (f"M0 {m0:.3f}  [{m0_lo:.3f}, {m0_hi:.3f}]"
+                 if m0_lo == m0_lo else f"M0 {m0:.3f}")
         b.append(f"<text x='{px(m0):.1f}' y='{H-4}' {MONO} font-size='9' "
-                 f"fill='{DIM}' text-anchor='middle'>M0 {m0:.3f}</text>")
-    y = 58
+                 f"fill='{GD}' text-anchor='middle'>{m0_lab}</text>")
+    y = 62
     for s in sp:
         om, lo, hi = rows_by_sp[s]
         b.append(f"<text x='{x0-10}' y='{y+4}' {MONO} font-size='11' fill='{INK}' "
@@ -228,8 +245,9 @@ def forest_plot(rows_by_sp: dict, m0: float, path: Path) -> None:
         y += 34
     for frac in (0, 0.5, 1.0):
         xv = xmin + frac * (xmax - xmin)
-        b.append(f"<text x='{px(xv):.0f}' y='{H-16}' {MONO} font-size='9' "
-                 f"fill='{DIM}' text-anchor='middle'>{xv:.3f}</text>")
+        b.append(f"<text x='{px(xv):.0f}' y='{H-16 if m0_lo==m0_lo else H-16}' "
+                 f"{MONO} font-size='9' fill='{DIM}' "
+                 f"text-anchor='middle'>{xv:.3f}</text>")
     path.write_text(_svg(W, H, "".join(b)), encoding="utf-8")
 
 
@@ -444,6 +462,7 @@ def main(argv=None) -> int:
               m0=m0_path.exists())
 
     omega_m0 = float("nan")
+    m0_ci = (float("nan"), float("nan"))
     if m0_path.exists():
         # apply the same dS filter as the per-species numbers, so omega_M0
         # is comparable to them (an unfiltered M0 is dragged around by the
@@ -452,16 +471,18 @@ def main(argv=None) -> int:
         m0_kept = [r for r in m0_all
                    if r.qc != "ds_floor" and r.dS <= args.ds_ceiling]
         omega_m0 = pooled_omega(m0_kept)
+        # M0's own uncertainty -- it is an estimate too, not a known
+        # constant, so the forest plot must not draw it as a bare line
+        m0_ci = bootstrap_ci(m0_kept, args.bootstrap, args.seed)
 
     if not tr_paths:
         # M0-only: no per-species proxy is possible, but the genome-wide
         # pooled omega is still a usable number.
-        m0_rows = m0_kept
-        lo, hi = bootstrap_ci(m0_rows, args.bootstrap, args.seed)
+        lo, hi = m0_ci
         (args.out_dir / "ne_proxy.tsv").write_text(
             "scope\tomega_pooled\tci_lo\tci_hi\tn_genes\n"
             f"genome_wide_M0\t{omega_m0:.6f}\t{lo:.6f}\t{hi:.6f}\t"
-            f"{len({r.gene_id for r in m0_rows})}\n", encoding="utf-8")
+            f"{len({r.gene_id for r in m0_kept})}\n", encoding="utf-8")
         stage_log(log, "stage7", "done", mode="m0_only",
                   omega_M0=f"{omega_m0:.4f}",
                   elapsed_s=f"{time.perf_counter() - t0:.2f}")
@@ -481,8 +502,8 @@ def main(argv=None) -> int:
 
     proxy_rows = ["species\tomega_pooled\tci_lo\tci_hi\tn_genes\t"
                   "n_excl_ds_floor\tn_excl_ds_ceiling\tmean_omega\t"
-                  "median_omega\tmean_t\tomega_M0\tn_lrt\tn_lrt_p05\t"
-                  "frac_lrt_p05\tmean_lrt"]
+                  "median_omega\tmean_t\tomega_M0\tomega_M0_ci_lo\t"
+                  "omega_M0_ci_hi\tn_lrt\tn_lrt_p05\tfrac_lrt_p05\tmean_lrt"]
     per_gene = ["species\tgene_id\tN\tS\tdN\tdS\tomega\tt\tqc_flag\tused\texcl_reason"]
     forest, dists, pooled_by_sp, tvst = {}, {}, {}, []
     lrt_by_sp, lrt_stats = {}, {}
@@ -521,7 +542,8 @@ def main(argv=None) -> int:
         proxy_rows.append(
             f"{species}\t{om:.6f}\t{lo:.6f}\t{hi:.6f}\t{len(used)}\t"
             f"{n_floor}\t{n_ceil}\t{mean_o:.6f}\t{med_o:.6f}\t{mean_t:.6f}\t"
-            f"{omega_m0:.6f}\t{n_lrt}\t{n_sig}\t{frac_sig:.4f}\t{mean_lrt:.4f}")
+            f"{omega_m0:.6f}\t{m0_ci[0]:.6f}\t{m0_ci[1]:.6f}\t{n_lrt}\t"
+            f"{n_sig}\t{frac_sig:.4f}\t{mean_lrt:.4f}")
         for r, is_used, reason in annot:
             per_gene.append(
                 f"{species}\t{r.gene_id}\t{r.N:.1f}\t{r.S:.1f}\t{r.dN:.5f}\t"
@@ -544,7 +566,7 @@ def main(argv=None) -> int:
 
     plots = args.out_dir / "plots"
     plots.mkdir(exist_ok=True)
-    forest_plot(forest, omega_m0, plots / "ne_proxy_forest.svg")
+    forest_plot(forest, omega_m0, m0_ci, plots / "ne_proxy_forest.svg")
     dist_plot(dists, pooled_by_sp, plots / "omega_per_gene_dist.svg")
     omega_vs_t_plot(tvst, plots / "omega_vs_divergence.svg")
     lrt_plot(lrt_by_sp, lrt_stats, plots / "lineage_effect_lrt.svg")
@@ -560,7 +582,9 @@ def main(argv=None) -> int:
     elapsed = time.perf_counter() - t0
     stage_log(log, "stage7", "done", species=len(tr_paths),
               omega_M0=f"{omega_m0:.4f}", png=n_png, elapsed_s=f"{elapsed:.2f}")
-    print(f"\nM0 genome-wide omega = {omega_m0:.4f}")
+    m0_ci_str = (f"  [{m0_ci[0]:.4f}, {m0_ci[1]:.4f}]" if m0_ci[0] == m0_ci[0]
+                else "")
+    print(f"\nM0 genome-wide omega = {omega_m0:.4f}{m0_ci_str}")
     print(f"wrote ne_proxy.tsv, per_gene_omega.tsv, plots/ -> {args.out_dir}/ "
           f"[{elapsed:.2f}s]")
     return 0

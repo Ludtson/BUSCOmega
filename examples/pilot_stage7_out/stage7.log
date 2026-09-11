@@ -1,2 +1,2 @@
-[2026-09-10 23:12:22Z] stage7 start  focal_species=3  ds_ceiling=1.5  bootstrap=500  m0=True
-[2026-09-10 23:12:23Z] stage7 done  species=3  omega_M0=0.1577  png=0  elapsed_s=0.83
+[2026-09-11 17:53:08Z] stage7 start  focal_species=3  ds_ceiling=1.5  bootstrap=1000  m0=True
+[2026-09-11 17:53:09Z] stage7 done  species=3  omega_M0=0.1577  png=0  elapsed_s=1.28
