@@ -22,6 +22,10 @@ jobs:
           pip install pytest
           pytest tests/ -v
       - name: Confirm stdlib-only
+        if: matrix.python-version == '3.12'
+        # sys.stdlib_module_names needs Python >=3.10; this is a static
+        # source-scan policy check, identical on every interpreter, so
+        # running it once (on the newer matrix leg) is sufficient.
         run: |
           python - <<'EOF'
           import ast, sys, pathlib
