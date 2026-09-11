@@ -320,10 +320,9 @@ crushed the estimate to ~0.035.
   crashing the stage (Stage 5 already had this).
 - `[x]` **Fixed:** `07_ne_proxy.py` plots guard against NaN / empty inputs
   (no M0 records, or all genes filtered) → a placeholder SVG, not a crash.
-- `[ ]` **Packaging blocker:** `examples/pilot_proteomes/` is **151 MB**
-  (3 full proteomes + CDS). `.gitignore` it before `git init`; ship only
-  `examples/3species_pilot/` (6.5 MB minimal input) + the small stage
-  outputs. `examples/pilot_stage2_out/` (4.3 MB, regenerable) can also go.
+- `[x]` **Packaging blocker resolved:** `examples/pilot_proteomes/` (151 MB)
+  is gitignored, confirmed not tracked (`git ls-files` → 0). Largest
+  tracked blob on GitHub is 168 KB. Nowhere near a size problem.
 - `[ ]` Minor (not blocking): Stage 1 `busco_status_summary.tsv`
   `duplicated` / `total` count *rows* not *genes* (Duplicated = 2+
   rows/gene); Stage 2 `n_flagged` can exceed the manifest's flag=1 count
@@ -367,10 +366,14 @@ crushed the estimate to ~0.035.
 - `[x]` `LICENSE` (MIT), `CITATION.cff`, `pyproject.toml` (metadata +
   pytest config), `.gitignore` (excludes the 151 MB proteomes),
   `.github/workflows/tests.yml` (8 suites + stdlib-only check on 3.9/3.12).
-- `[ ]` `git init` + first commit + push to `github.com/Ludtson/BUSCOmega`.
+- `[x]` `git init` + first commit + **pushed to
+  github.com/Ludtson/BUSCOmega** (2026-09-11). 13 commits, `main` tracked.
 - `[ ]` `--check-deps` top-level mode (report binaries + versions) — nice
   to have; the per-stage checks already cover the failure case.
-- `[ ]` Fancier pipeline figure (user asked; current one is linear/green).
+- `[x]` Fancier pipeline figure: funnel layout + distinct glyph per stage,
+  phylo trees hand-finished in Inkscape. `docs/figures/pipeline.svg`.
+- `[ ]` Confirm CI (`tests.yml`) is green on GitHub now that it's public —
+  check the Actions tab.
 
 ---
 
