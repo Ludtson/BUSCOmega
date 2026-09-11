@@ -5,7 +5,10 @@ examples/pilot_stage2_out/
 examples/pilot_stage3_out/prot_aln/
 examples/pilot_stage5_out/
 examples/pilot_stage7_out/plots/
-examples/3species_pilot/pilot_free_model.mlc
+# NOTE: examples/3species_pilot/pilot_free_model.mlc is NOT regenerable
+# (real free-ratio codeml output; the pipeline doesn't produce free-ratio
+# runs) and tests/test_parse_codeml_output.py requires it -- keep it
+# tracked. Do not re-add it here.
 
 # Raw BUSCO run folders inside the example species dirs (keep only full_table.tsv)
 examples/pilot_busco/*/run_*/busco_sequences/
