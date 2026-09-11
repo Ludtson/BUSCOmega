@@ -33,7 +33,7 @@ Add what you need: `conda install -n buscomega -c <channel> <pkg>`.
 
 | package | channel | needed for |
 |---|---|---|
-| `busco` >=5.5 | bioconda **and** conda-forge | the prerequisite BUSCO run (`prep_optional/run_busco.py`) — only if you have no BUSCO output yet. **Needs both channels**: `conda install -n buscomega -c bioconda -c conda-forge busco>=5.5` — augustus (a BUSCO dependency) needs conda-forge's `boost-cpp`/`gsl`/`lp_solve`; a bioconda-only solve fails with an unsatisfiable-augustus error. Large dependency tree either way; often kept in its own env. |
+| `busco` >=5.5 | **its own env**, not `buscomega` | the prerequisite BUSCO run (`prep_optional/run_busco.py`) — only if you have no BUSCO output yet. `conda create -n busco -c bioconda -c conda-forge python=3.11 busco>=5.5`. Adding it to the existing `buscomega` env can fail to solve two ways: augustus needs conda-forge (bioconda alone → "no viable options"), and even with both channels, conda's reluctance to change an already-installed Python version can collide with BUSCO's `sepp` dependency having no build for a newer Python. A fresh env with `python=3.11` avoids both — see `run_busco.md` for the full story. |
 | `iqtree` >=2.2 | bioconda | inferring a species tree from your alignments (`prep_optional/species_tree.py infer --run-iqtree`). Not needed if you supply a tree. |
 | `librsvg` | conda-forge | PNG copies of the Stage 7 plots (`07_ne_proxy.py --png`) — provides `rsvg-convert`. `inkscape` or `cairosvg` also work. SVG is always written regardless. |
 

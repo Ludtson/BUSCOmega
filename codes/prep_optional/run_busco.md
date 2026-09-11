@@ -12,37 +12,40 @@ species' failure doesn't kill the run, and it's testable.
 
 ## Dependencies
 
-`busco` (>=5.5) on `PATH`. Deliberately **not** in the core `buscomega`
-conda env — most users already have BUSCO output, and it pulls a large
-dependency tree (hmmer, metaeuk, augustus/miniprot). Add it if you need it:
+`busco` (>=5.5) on `PATH`. **Install it into its own conda env, not
+`buscomega`:**
 
 ```bash
-conda install -n buscomega -c bioconda -c conda-forge 'busco>=5.5'
+conda create -n busco -c bioconda -c conda-forge python=3.11 'busco>=5.5'
 ```
 
-**Both channels are required** — augustus (a BUSCO dependency) needs
-conda-forge's `boost-cpp`/`gsl`/`lp_solve`. `-c bioconda` alone fails to
-solve with an "augustus ... no viable options" error.
-
-If that still fails to solve, pin the channels on the env once instead of
-per-command, and set strict priority:
+This script is stdlib-only, so it runs fine under any env's Python —
+activate `busco` for this one step, then switch back:
 
 ```bash
-conda config --env --append channels bioconda
-conda config --env --append channels conda-forge
-conda config --env --set channel_priority strict
-conda install -n buscomega busco>=5.5
+conda activate busco
+python run_busco.py <fasta_dir> -o <out_dir> --lineage <lineage_dir> --mode protein
+conda activate buscomega   # back to this for the rest of the pipeline
 ```
 
-or use mamba, which handles this dependency graph more reliably:
+**Why a separate env, not `-c conda-forge busco>=5.5` on top of
+`buscomega`:** two different, real solve failures doing that —
 
-```bash
-conda install -n buscomega -c conda-forge mamba
-mamba install -n buscomega -c bioconda -c conda-forge 'busco>=5.5'
-```
+1. `-c bioconda` alone: augustus (a BUSCO dependency) needs conda-forge's
+   `boost-cpp`/`gsl`/`lp_solve` → "augustus ... no viable options".
+2. `-c bioconda -c conda-forge` together, into an *existing* env: conda
+   tries not to change packages already installed, which acts as an
+   implicit pin on that env's Python version. If `buscomega`'s Python
+   ended up newer than what BUSCO's `sepp` dependency has builds for
+   (e.g. Python 3.14, released after the newest `sepp` build only goes up
+   to <3.14), the solve fails outright — there is no BUSCO/sepp release
+   for that Python yet.
 
-or keep BUSCO in its own environment and just put it on `PATH` when you
-run this script.
+Pinning `python=3.11` in a **fresh** env sidesteps both: nothing is
+"already installed" to protect, and 3.11 has compatible builds all the
+way through BUSCO's dependency tree. It also keeps BUSCO's large
+dependency pull (hmmer, metaeuk, augustus, sepp, pandas, matplotlib, ...)
+out of the env that runs mafft/pal2nal/codeml.
 
 You also need a **pre-downloaded lineage dataset** — this script runs
 BUSCO `--offline`:

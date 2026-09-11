@@ -24,12 +24,15 @@ dependencies:
 # non-core feature; add the ones you want with:
 #   conda install -n buscomega -c <channel> <package>
 #
-#   busco >=5.5     (bioconda + conda-forge -- augustus needs conda-forge's
-#                   boost-cpp/gsl/lp_solve; a bioconda-only solve fails)
-#                         prep_optional/run_busco.py, if you have no BUSCO
-#                         output yet. Pulls a large tree (hmmer, metaeuk,
-#                         augustus/miniprot). Many users keep it in its own env.
-#     conda install -n buscomega -c bioconda -c conda-forge busco>=5.5
+#   busco >=5.5     -- do NOT add to this env. Use a separate one:
+#     conda create -n busco -c bioconda -c conda-forge python=3.11 busco>=5.5
+#   Two different real solve failures adding it here: augustus needs
+#   conda-forge (bioconda alone -> "no viable options"), and even with
+#   both channels, conda protecting this env's already-installed Python
+#   version can collide with BUSCO's sepp dependency having no build for
+#   a newer Python. A fresh env with python=3.11 avoids both -- see
+#   codes/prep_optional/run_busco.md. run_busco.py is stdlib-only, so it
+#   runs fine under the busco env's own Python for that one step.
 #
 #   iqtree >=2.2          (bioconda)      -- prep_optional/species_tree.py infer
 #                         --run-iqtree, i.e. inferring a species tree from the

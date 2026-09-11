@@ -36,11 +36,11 @@ Outputs (into --out-dir):
     busco_run.log              timestamped start/done line, matching the
                                stageN.log convention
 
-Stdlib only. BUSCO itself must be on PATH -- it is deliberately not in the
-core `buscomega` conda env (docs/install.md): `conda install -n buscomega
--c bioconda -c conda-forge busco>=5.5` (both channels -- augustus needs
-conda-forge's boost-cpp/gsl/lp_solve, bioconda alone fails to solve), or
-keep BUSCO in its own environment.
+Stdlib only, so it runs fine under any env's Python. BUSCO itself must be
+on PATH -- install it into its OWN conda env, not `buscomega` (two
+different real solve failures doing otherwise; see docs/install.md):
+`conda create -n busco -c bioconda -c conda-forge python=3.11 busco>=5.5`,
+then `conda activate busco` for this one step.
 
 Author: Adekolá Owoyemi (Casola Lab, ECCB, Texas A&M University)
 Version: 0.1.0
@@ -72,13 +72,12 @@ def stage_log(logpath: Path, stage: str, event: str, **fields) -> None:
 
 def check_tools() -> None:
     if shutil.which("busco") is None:
-        sys.exit("run_busco.py needs `busco` on PATH -- it is not in the "
-                 "core buscomega env by design. Install it with:\n"
-                 "  conda install -n buscomega -c bioconda -c conda-forge "
-                 "busco>=5.5\n"
-                 "(both channels -- augustus needs conda-forge's "
-                 "boost-cpp/gsl/lp_solve; bioconda alone fails to solve)\n"
-                 "or activate an environment that has it.")
+        sys.exit("run_busco.py needs `busco` on PATH. Install it into its "
+                 "own env (not buscomega -- see docs/install.md for why):\n"
+                 "  conda create -n busco -c bioconda -c conda-forge "
+                 "python=3.11 busco>=5.5\n"
+                 "then `conda activate busco` before running this script, "
+                 "or otherwise put busco on PATH.")
 
 
 def find_fasta(fasta_dir: Path) -> list[tuple[str, Path]]:
