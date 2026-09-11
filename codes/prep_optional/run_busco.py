@@ -38,7 +38,9 @@ Outputs (into --out-dir):
 
 Stdlib only. BUSCO itself must be on PATH -- it is deliberately not in the
 core `buscomega` conda env (docs/install.md): `conda install -n buscomega
--c bioconda busco>=5.5`, or keep it in its own environment.
+-c bioconda -c conda-forge busco>=5.5` (both channels -- augustus needs
+conda-forge's boost-cpp/gsl/lp_solve, bioconda alone fails to solve), or
+keep BUSCO in its own environment.
 
 Author: Adekolá Owoyemi (Casola Lab, ECCB, Texas A&M University)
 Version: 0.1.0
@@ -72,7 +74,10 @@ def check_tools() -> None:
     if shutil.which("busco") is None:
         sys.exit("run_busco.py needs `busco` on PATH -- it is not in the "
                  "core buscomega env by design. Install it with:\n"
-                 "  conda install -n buscomega -c bioconda busco>=5.5\n"
+                 "  conda install -n buscomega -c bioconda -c conda-forge "
+                 "busco>=5.5\n"
+                 "(both channels -- augustus needs conda-forge's "
+                 "boost-cpp/gsl/lp_solve; bioconda alone fails to solve)\n"
                  "or activate an environment that has it.")
 
 

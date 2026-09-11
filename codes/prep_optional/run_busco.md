@@ -17,7 +17,28 @@ conda env — most users already have BUSCO output, and it pulls a large
 dependency tree (hmmer, metaeuk, augustus/miniprot). Add it if you need it:
 
 ```bash
-conda install -n buscomega -c bioconda 'busco>=5.5'
+conda install -n buscomega -c bioconda -c conda-forge 'busco>=5.5'
+```
+
+**Both channels are required** — augustus (a BUSCO dependency) needs
+conda-forge's `boost-cpp`/`gsl`/`lp_solve`. `-c bioconda` alone fails to
+solve with an "augustus ... no viable options" error.
+
+If that still fails to solve, pin the channels on the env once instead of
+per-command, and set strict priority:
+
+```bash
+conda config --env --append channels bioconda
+conda config --env --append channels conda-forge
+conda config --env --set channel_priority strict
+conda install -n buscomega busco>=5.5
+```
+
+or use mamba, which handles this dependency graph more reliably:
+
+```bash
+conda install -n buscomega -c conda-forge mamba
+mamba install -n buscomega -c bioconda -c conda-forge 'busco>=5.5'
 ```
 
 or keep BUSCO in its own environment and just put it on `PATH` when you
