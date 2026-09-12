@@ -58,7 +58,11 @@ busco_out/
 ```
 
 `prep_optional/run_busco.py` automates this if you need it — see
-[`codes/prep_optional/run_busco.md`](codes/prep_optional/run_busco.md).
+[`codes/prep_optional/run_busco.md`](codes/prep_optional/run_busco.md). It
+also writes its own `logs/` folder alongside the species ones; Stage 1
+identifies a species by whether a subdirectory actually contains a
+`full_table.tsv`, not by name, so `logs/` (or any other non-species
+subdirectory another BUSCO wrapper might leave there) is skipped safely.
 
 ---
 
