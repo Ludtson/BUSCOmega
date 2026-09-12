@@ -61,6 +61,53 @@ phylogenomic paper (e.g. Nikolov et al. 2019; Walden et al. 2020; Hendriks
 et al. 2023), write or download the Newick, and clean it with `prepare`.
 No inference needed, and a citation defends the topology.
 
+## `match` — your tip names don't match your species names
+
+Common with an **OrthoFinder** species tree
+(`SpeciesTree_rooted[_node_labels].txt`): OrthoFinder's tips are your input
+FASTA filenames with the extension stripped, so whatever you named the
+files survives into the tree. If you ran OrthoFinder on
+isoform-cleaned proteomes named e.g. `Athaliana_longest_isoforms.faa`, the
+tip is `Athaliana_longest_isoforms` — not `Athaliana`, which is what your
+`protein/`/`cds/` directories and `common_scos.tsv` use.
+
+```bash
+species_tree.py match SpeciesTree_rooted_node_labels.txt \
+    --to protein/ -o rename_map.tsv
+```
+
+`--to` accepts a directory of FASTA files (species = filename up to the
+first dot, same rule as Stage 1/2), a `common_scos.tsv`, or a one-per-line
+list. For each tip it tries, in order: exact match, case-insensitive,
+stripping a known suffix (`_longest_isoforms`, `_protein`, `_pep`, ... —
+extend `COMMON_TIP_SUFFIXES` in the script for your own naming), then a
+unique-prefix match if exactly one target is plausible.
+
+**It never silently applies a guess.** Only exact / case-insensitive /
+known-suffix matches are written as active `old<TAB>new` lines. Everything
+else — a unique-prefix guess, an ambiguous tip with more than one plausible
+target, or no match at all — is written as a `#`-commented line you must
+read and either uncomment or fix by hand before it does anything:
+
+```
+SpeciesA_longest_isoforms	SpeciesA	suffix-stripped
+# VERIFY  Foo_v1	Foo	unique-prefix -- only plausible match, not exact or a known suffix.
+# NO MATCH   Totally_Unrelated	?
+```
+
+If the tree looks like OrthoFinder output (sequential `N0, N1, N2, ...`
+internal-node labels, and/or the `SpeciesTree` filename), `match` prints a
+one-line note saying so — informational only, it doesn't change what the
+command does.
+
+Feed the reviewed map straight to `prepare --rename` — a third column
+(the rule, for your own reference) is fine; only the first two are used:
+
+```bash
+species_tree.py prepare SpeciesTree_rooted_node_labels.txt \
+    -o species_tree.nwk --rename rename_map.tsv --match-to protein/
+```
+
 ## `infer` — build a tree from your own alignments
 
 For a clade with no published phylogeny.
@@ -99,5 +146,7 @@ species_tree.py prepare tree_infer/iqtree.treefile -o species_tree.nwk \
 ## Test
 
 `tests/test_species_tree.py` — the stdlib parts: Newick cleaning (lengths,
-support, NEXUS wrapper, quoted names), `--rename`, the tip/data check, and
-the supermatrix concatenation. The IQ-TREE call is not exercised.
+support, internal node labels like RAxML/IQ-TREE/OrthoFinder's `N0, N1,
+...`, NEXUS wrapper, quoted names), `--rename`, the tip/data check, the
+`match` matching rules and its refusal to auto-apply an uncertain guess,
+and the supermatrix concatenation. The IQ-TREE call is not exercised.

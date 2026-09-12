@@ -7,11 +7,22 @@ topology is used -- codeml re-estimates every branch length -- but the tree
 still has to have the right tip names and be readable. This optional helper
 covers the two ways you get there.
 
-  prepare   Clean an existing tree (from the literature or a previous
-            analysis): strip branch lengths, internal-node support, inline
-            [&...] comments and quoting; optionally rename tips to match
-            your proteome names; check the tip set against your data.
-            Stdlib only.
+  prepare   Clean an existing tree (from the literature, OrthoFinder, or a
+            previous analysis): strip branch lengths, internal-node labels
+            (numeric support or named, e.g. RAxML/IQ-TREE/OrthoFinder's
+            N0, N1, ...), inline [&...] comments and quoting; optionally
+            rename tips to match your proteome names; check the tip set
+            against your data. Stdlib only.
+
+  match     Your tree's tip names don't match your species names (common
+            with OrthoFinder's species tree -- tips are your input FASTA
+            filenames, extension stripped, so a suffix like
+            "_longest_isoforms" survives into the tree). Suggests a
+            --rename map by exact / case-insensitive / suffix-stripped /
+            unique-prefix matching against a directory of FASTA files, a
+            common_scos.tsv, or a species list. Never auto-applies a
+            guess -- anything not a confident match comes back flagged
+            AMBIGUOUS or NO MATCH for you to resolve by hand.
 
   infer     You have no tree. Concatenate the Stage 3 protein alignments
             into a supermatrix and (optionally) run IQ-TREE to get one.
@@ -88,20 +99,33 @@ def apply_rename(topology: str, mapping: dict[str, str]) -> str:
 
 
 def read_rename(path: Path) -> dict[str, str]:
+    """old<TAB>new, one per line. A third+ column (e.g. `match`'s rule
+    annotation) is tolerated and ignored, so its output is directly usable
+    here without editing -- only the AMBIGUOUS / NO MATCH lines, which
+    have no resolvable second column, need a human's attention first."""
     out: dict[str, str] = {}
     for ln in path.read_text(encoding="utf-8").splitlines():
         ln = ln.strip()
         if not ln or ln.startswith("#"):
             continue
         parts = ln.split("\t") if "\t" in ln else ln.split()
-        if len(parts) != 2:
+        if len(parts) < 2:
             raise SystemExit(f"rename file: expected 'old<TAB>new', got: {ln!r}")
         out[parts[0]] = parts[1]
     return out
 
 
 def read_species(path: Path) -> set[str]:
-    """Species names from a common_scos.tsv header, or a one-per-line list."""
+    """Species names from: a directory of FASTA files (name = filename up to
+    the first dot, same rule as Stage 1/2), a common_scos.tsv header, or a
+    one-per-line list."""
+    if path.is_dir():
+        names = set()
+        for p in path.iterdir():
+            if p.is_file() and p.suffix.lower() in (
+                    ".faa", ".fa", ".fna", ".fasta"):
+                names.add(p.name.split(".")[0])
+        return names
     lines = path.read_text(encoding="utf-8").splitlines()
     if not lines:
         return set()
@@ -109,6 +133,138 @@ def read_species(path: Path) -> set[str]:
     if head and head[0] == "busco_id":
         return set(head[1:])
     return {ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")}
+
+
+# --------------------------------------------------------------------------
+# matching tree tips to your actual species names -- never a silent guess
+# --------------------------------------------------------------------------
+# Suffixes seen in the wild on tree tips that came from a FASTA filename
+# used verbatim as the tip label (OrthoFinder's species tree does exactly
+# this: the tip is your input filename with its extension stripped, so
+# whatever you named the file survives into the tree -- "_longest_isoforms"
+# is common because that is what protein-preprocessing-isoform-pipeline
+# appends). Not OrthoFinder-specific: the same stripping helps any tree
+# whose tips carry a suffix your data's names don't.
+COMMON_TIP_SUFFIXES = (
+    "_longest_isoforms", "_longest_isoform", ".longest_isoforms",
+    "_protein", "_proteins", "_pep", "_cds", "_cleaned",
+)
+
+
+def looks_like_orthofinder(tree_path: Path, raw_text: str) -> bool:
+    """Informational only -- never gates behaviour. OrthoFinder's species
+    tree (SpeciesTree_rooted[_node_labels].txt) numbers internal nodes
+    N0, N1, N2, ... sequentially starting from the root; that pattern plus
+    the filename is a strong enough signal to point the user at `match`."""
+    if tree_path.name.startswith("SpeciesTree"):
+        return True
+    labels = re.findall(r"\)(N\d+)(?=[,():;])", raw_text)
+    return len(labels) >= 3 and "N0" in labels
+
+
+def guess_matches(tips: list[str], targets: set[str]
+                  ) -> dict[str, tuple[str | None, str, list[str]]]:
+    """Per tip: (best_guess_or_None, rule, other_candidates).
+
+    Rules tried in order, first hit wins: exact / case-insensitive /
+    suffix-stripped (either side) / unique-prefix. Never guesses when more
+    than one target is equally plausible -- that comes back as "ambiguous"
+    with the candidate list, for a human to resolve.
+    """
+    out: dict[str, tuple[str | None, str, list[str]]] = {}
+    lower_targets = {t.lower(): t for t in targets}
+    for tip in tips:
+        if tip in targets:
+            out[tip] = (tip, "exact", [])
+            continue
+        if tip.lower() in lower_targets:
+            out[tip] = (lower_targets[tip.lower()], "case-insensitive", [])
+            continue
+
+        stripped_hit = None
+        for suf in COMMON_TIP_SUFFIXES:
+            if tip.endswith(suf) and tip[: -len(suf)] in targets:
+                stripped_hit = tip[: -len(suf)]
+                break
+        if stripped_hit is None:
+            for t in targets:
+                for suf in COMMON_TIP_SUFFIXES:
+                    if t.endswith(suf) and t[: -len(suf)] == tip:
+                        stripped_hit = t
+                        break
+                if stripped_hit:
+                    break
+        if stripped_hit:
+            out[tip] = (stripped_hit, "suffix-stripped", [])
+            continue
+
+        prefix_hits = [t for t in targets
+                       if t.startswith(tip) or tip.startswith(t)]
+        if len(prefix_hits) == 1:
+            out[tip] = (prefix_hits[0], "unique-prefix", [])
+        elif len(prefix_hits) > 1:
+            out[tip] = (None, "ambiguous", sorted(prefix_hits))
+        else:
+            out[tip] = (None, "no-match", [])
+    return out
+
+
+def cmd_match(args) -> int:
+    topo = clean_newick(args.in_tree.read_text(encoding="utf-8"))
+    tips = tip_labels(topo)
+    targets = read_species(args.to)
+    if not targets:
+        raise SystemExit(f"no species names found in {args.to}")
+
+    if looks_like_orthofinder(args.in_tree,
+                              args.in_tree.read_text(encoding="utf-8")):
+        print("Looks like an OrthoFinder species tree (sequential N-numbered "
+              "internal nodes, and/or the SpeciesTree filename). OrthoFinder "
+              "tip names are your input FASTA filenames with the extension "
+              "stripped -- if they don't match your species names, a suffix "
+              "from an upstream step (e.g. _longest_isoforms) is the usual "
+              "cause.\n")
+
+    guesses = guess_matches(tips, targets)
+    confident = {"exact", "case-insensitive", "suffix-stripped"}
+    rows = []
+    n_auto = n_review = 0
+    for tip in tips:
+        best, rule, cands = guesses[tip]
+        if rule in confident:
+            n_auto += 1
+            rows.append(f"{tip}\t{best}\t{rule}")
+        elif rule == "unique-prefix":
+            n_review += 1
+            rows.append(f"# VERIFY  {tip}\t{best}\tunique-prefix -- only "
+                        f"plausible match, not exact or a known suffix. "
+                        f"Uncomment (remove '# VERIFY  ') once you've "
+                        f"checked it.")
+        elif rule == "ambiguous":
+            n_review += 1
+            rows.append(f"# AMBIGUOUS  {tip}\t?\tcandidates: "
+                        f"{', '.join(cands)}")
+        else:
+            n_review += 1
+            rows.append(f"# NO MATCH   {tip}\t?")
+
+    print(f"{len(tips)} tips, {len(targets)} target species: "
+          f"{n_auto} confident (exact/case/suffix), {n_review} need review")
+    for r in rows:
+        print(f"  {r}")
+
+    if args.out:
+        header = ("# species_tree.py match -- old<TAB>new, one per tip.\n"
+                  "# Lines starting with # are ignored by --rename.\n"
+                  "# VERIFY / AMBIGUOUS / NO MATCH lines are commented out on\n"
+                  "# purpose -- none of them is a confident match. Check each,\n"
+                  "# then uncomment (or hand-write) a plain 'old<TAB>new' line.\n")
+        args.out.write_text(header + "\n".join(rows) + "\n", encoding="utf-8")
+        print(f"\n-> {args.out}"
+              + (f"  ({n_review} line(s) need your review before --rename)"
+                 if n_review else ""))
+
+    return 0 if n_review == 0 else 1
 
 
 def cmd_prepare(args) -> int:
@@ -134,7 +290,8 @@ def cmd_prepare(args) -> int:
                       f"{args.match_to.name}:", file=sys.stderr)
                 print(f"  only in tree: {only_tree or '-'}", file=sys.stderr)
                 print(f"  only in data: {only_data or '-'}", file=sys.stderr)
-                print("  (fix with --rename, or correct the tree)",
+                print("  fix with --rename, or correct the tree -- "
+                      "`species_tree.py match` will suggest a rename map",
                       file=sys.stderr)
 
     args.out.write_text(topo + "\n", encoding="utf-8")
@@ -256,6 +413,18 @@ def main(argv=None) -> int:
     p.add_argument("--match-to", type=Path,
                    help="common_scos.tsv (or a species list) to check tips against")
     p.set_defaults(func=cmd_prepare)
+
+    m = sub.add_parser("match", help="suggest a --rename map against your "
+                       "actual species names (never auto-applies a guess)")
+    m.add_argument("in_tree", type=Path)
+    m.add_argument("--to", type=Path, required=True,
+                  help="a directory of FASTA files, a common_scos.tsv, or a "
+                       "one-per-line species list -- your ground truth names")
+    m.add_argument("-o", "--out", type=Path,
+                  help="write the suggested map here (feed it to "
+                       "`prepare --rename`); confident matches only need a "
+                       "glance, AMBIGUOUS / NO MATCH lines need fixing by hand")
+    m.set_defaults(func=cmd_match)
 
     q = sub.add_parser("infer", help="build a supermatrix and (optionally) run IQ-TREE")
     q.add_argument("aln_dir", type=Path,

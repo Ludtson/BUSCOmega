@@ -38,7 +38,7 @@ already chains 5 -> 6 -> 7 via `--stage5-dir`.
 |---|---|---|---|
 | prereq | `prep_optional/run_busco.py` | done | proteome FASTAs + lineage DB -> per-species BUSCO folders (`full_table.tsv`), in parallel, with a manifest + `--resume`. Only run if BUSCO output does not already exist. |
 | prereq | `prep_optional/busco_summary.py` | recovered | helper called by `run_busco.py`; scrapes BUSCO summary files to one CSV. |
-| prereq | `prep_optional/species_tree.py` | done | clean an existing Newick (`prepare`) or build a supermatrix + run IQ-TREE (`infer`) → a topology for Stage 4. Optional; `infer --run-iqtree` needs IQ-TREE 2. |
+| prereq | `prep_optional/species_tree.py` | done | clean an existing Newick (`prepare`), suggest a tip-rename map against your real species names (`match` — e.g. an OrthoFinder species tree), or build a supermatrix + run IQ-TREE (`infer`) → a topology for Stage 4. Optional; `infer --run-iqtree` needs IQ-TREE 2. |
 | 1 | `core/01_common_scos.py` | done | the `full_table.tsv` files -> `common_scos.tsv` (single-copy in every species + per-species protein ID) + `busco_status_summary.tsv` |
 | 2 | `core/02_extract_sco_seqs.py` | done | `common_scos.tsv` + per-species protein & CDS FASTAs -> one protein file + one CDS file per gene, each with all species |
 | 3 | `core/03_codon_align.py` | done | per-gene protein + CDS files -> per-gene protein alignments (MAFFT) and codon alignments (`.pml`, PAL2NAL) |

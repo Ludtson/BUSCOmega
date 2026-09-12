@@ -120,6 +120,32 @@ Full derivation and the pilot demonstration: [`docs/primer.md`](docs/primer.md)
 
 ---
 
+## Validated on a real pilot
+
+3 Brassicaceae (*A. halleri*, *A. thaliana*, *C. grandiflora*), 369 BUSCO
+genes, full pipeline run end to end:
+
+| species | pooled ω | 95% CI |
+|---|---|---|
+| a_halleri | 0.163 | 0.152 – 0.174 |
+| a_thaliana | 0.170 | 0.158 – 0.183 |
+| c_grandiflora | 0.151 | 0.135 – 0.166 |
+
+![Per-gene ω distribution, per-species pooled estimate marked](docs/figures/omega_estimators.svg)
+
+**Is the result sensitive to the branch model?** No — 2-ratio and
+free-ratio, estimated per gene and pooled the same way, agree to ~2%. What
+*does* matter is gene filtering, not the model choice:
+
+![Four estimation routes compared on the pilot](analysis/method_comparison.svg)
+
+Full writeup, including why the naive concatenate route disagrees until
+you filter the same genes, and the likelihood-ratio test for whether a
+species' ω is actually distinguishable from the fixed model:
+[`analysis/findings.md`](analysis/findings.md).
+
+---
+
 ## Scope
 
 **Is:** a per-species Nₑ proxy from genome-wide dN/dS over conserved

@@ -87,6 +87,81 @@ def test_build_supermatrix(tmp_path):
     assert ptxt[1] == "AA, g2 = 5-7"
 
 
+def test_looks_like_orthofinder(tmp_path):
+    of_tree = ("(A_longest_isoforms:0.1,((B_longest_isoforms:0.05,"
+              "C_longest_isoforms:0.05)N2:0.01,D_longest_isoforms:0.06)"
+              "N1:0.02)N0;")
+    assert mod.looks_like_orthofinder(Path("SpeciesTree_rooted.txt"), of_tree)
+    assert mod.looks_like_orthofinder(Path("anything.nwk"), of_tree)  # by content
+    plain = "((A:0.1,B:0.1)80:0.05,C:0.2);"
+    assert not mod.looks_like_orthofinder(Path("tree.nwk"), plain)
+
+
+def test_guess_matches():
+    targets = {"SpeciesA", "SpeciesB", "Foo", "FooBar"}
+    tips = ["SpeciesA", "speciesb", "SpeciesA_longest_isoforms",
+           "Foo_v1", "Xyz"]
+    g = mod.guess_matches(tips, targets)
+    assert g["SpeciesA"] == ("SpeciesA", "exact", [])
+    assert g["speciesb"] == ("SpeciesB", "case-insensitive", [])
+    assert g["SpeciesA_longest_isoforms"] == ("SpeciesA", "suffix-stripped", [])
+    # "Foo_v1" is a prefix match for "Foo", and NOT for "FooBar" (FooBar
+    # does not start with Foo_v1, nor is Foo_v1 a prefix of it) -> unique
+    assert g["Foo_v1"] == ("Foo", "unique-prefix", [])
+    assert g["Xyz"] == (None, "no-match", [])
+    # a genuinely ambiguous case: two targets both prefix-compatible
+    amb = mod.guess_matches(["Sp"], {"Species1", "Species2"})
+    assert amb["Sp"][1] == "ambiguous"
+    assert sorted(amb["Sp"][2]) == ["Species1", "Species2"]
+
+
+def test_cmd_match_never_auto_applies_uncertain(tmp_path):
+    fasta_dir = tmp_path / "fasta"
+    fasta_dir.mkdir()
+    (fasta_dir / "Foo.faa").write_text(">x\nMK\n")
+    (fasta_dir / "Bar.faa").write_text(">x\nMK\n")
+    tree = tmp_path / "SpeciesTree_rooted_node_labels.txt"
+    tree.write_text("(Foo_v1:0.1,(Bar_v1:0.05,Unrelated:0.05)N1:0.02)N0;\n")
+    out = tmp_path / "map.tsv"
+
+    rc = mod.main(["match", str(tree), "--to", str(fasta_dir), "-o", str(out)])
+    assert rc == 1                              # nothing confident -> review needed
+
+    text = out.read_text()
+    for line in text.splitlines():
+        if line.startswith("#") or not line.strip():
+            continue
+        raise AssertionError(f"an uncertain match was left active: {line!r}")
+    assert "# VERIFY" in text and "Foo_v1" in text
+    assert "# NO MATCH" in text and "Unrelated" in text
+
+    # read_rename must ignore every commented line -- applying this map
+    # as-is renames nothing
+    mapping = mod.read_rename(out)
+    assert mapping == {}
+
+
+def test_cmd_match_confident_map_is_usable(tmp_path):
+    fasta_dir = tmp_path / "fasta"
+    fasta_dir.mkdir()
+    for sp in ("SpeciesA", "SpeciesB", "SpeciesC"):
+        (fasta_dir / f"{sp}.faa").write_text(">x\nMK\n")
+    tree = tmp_path / "tree.nwk"
+    tree.write_text("(SpeciesA_longest_isoforms:0.1,"
+                    "(SpeciesB_longest_isoforms:0.1,"
+                    "SpeciesC_longest_isoforms:0.1)N1:0.1);\n")
+    map_out = tmp_path / "map.tsv"
+    rc = mod.main(["match", str(tree), "--to", str(fasta_dir),
+                  "-o", str(map_out)])
+    assert rc == 0
+
+    clean_out = tmp_path / "clean.nwk"
+    rc2 = mod.main(["prepare", str(tree), "-o", str(clean_out),
+                    "--rename", str(map_out), "--match-to", str(fasta_dir)])
+    assert rc2 == 0
+    assert clean_out.read_text().strip() == "(SpeciesA,(SpeciesB,SpeciesC));"
+
+
 if __name__ == "__main__":
     import tempfile
     test_clean_newick()
@@ -95,4 +170,11 @@ if __name__ == "__main__":
         test_prepare_cli(Path(td))
     with tempfile.TemporaryDirectory() as td:
         test_build_supermatrix(Path(td))
+    with tempfile.TemporaryDirectory() as td:
+        test_looks_like_orthofinder(Path(td))
+    test_guess_matches()
+    with tempfile.TemporaryDirectory() as td:
+        test_cmd_match_never_auto_applies_uncertain(Path(td))
+    with tempfile.TemporaryDirectory() as td:
+        test_cmd_match_confident_map_is_usable(Path(td))
     print("ALL TESTS PASSED")
