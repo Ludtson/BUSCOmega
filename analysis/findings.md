@@ -1,7 +1,7 @@
 # Method comparison — 3-species pilot
 
-**Question (raised by the PI):** the free-ratio model also produces ω values
-per branch — why does BUSCOmega use the two-ratio branch model instead, and
+**Motivating question:** the free-ratio model also produces ω values per
+branch — why does BUSCOmega use the two-ratio branch model instead, and
 does the choice change the answer?
 
 **Short answer:** the branch model barely moves the per-species ω. What
