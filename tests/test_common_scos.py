@@ -59,6 +59,19 @@ def test_common_set_and_summary(tmp_path):
           "| recoverable:", {s: srow[s][-1] for s in ("sp1", "sp2", "sp3")})
 
 
+def test_exclude_drops_species_from_consideration(tmp_path):
+    """--exclude sp3 removes it from both the species set and the
+    intersection -- geneC, which only sp3 sole-blocked (Duplicated), should
+    now join the common set since it's Complete in the remaining sp1/sp2."""
+    rc = mod.main([str(FIXTURE), "-o", str(tmp_path), "--exclude", "sp3"])
+    assert rc == 0
+    common = (tmp_path / "common_scos.tsv").read_text().splitlines()
+    header, *rows = common
+    assert header.split("\t") == ["busco_id", "sp1", "sp2"]
+    ids = [r.split("\t")[0] for r in rows]
+    assert ids == ["geneA", "geneB", "geneC", "geneF"], ids
+
+
 if __name__ == "__main__":
     import tempfile
     with tempfile.TemporaryDirectory() as td:

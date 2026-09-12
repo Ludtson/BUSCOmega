@@ -12,6 +12,7 @@ run_summary.tsv, and the regenerable gene-tracking audit.
         --tree       <species_tree.nwk> \
         -o           <run_dir> \
         [--focal SP ...]   (default: every tip in the tree) \
+        [--exclude SP ...] (drops it from Stage 1 AND prunes its tree tip) \
         [--jobs N] [--threads N] [--batch-size N] \
         [--ds-ceiling 1.5] [--bootstrap 1000] [--png] \
         [--cds-suffix-strip .p ...] \
@@ -40,6 +41,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 CORE = Path(__file__).resolve().parent / "codes" / "core"
+PREP = Path(__file__).resolve().parent / "codes" / "prep_optional"
 STAGE_DIRS = {
     1: "01_common_scos", 2: "02_sequences", 3: "03_alignments",
     4: "04_codeml", 5: "05_codeml_out", 6: "06_parsed", 7: "07_ne_proxy",
@@ -164,6 +166,12 @@ def main(argv=None) -> int:
     ap.add_argument("-o", "--out-dir", type=Path, required=True,
                     help="the run directory (created)")
     ap.add_argument("--focal", action="append", default=[], metavar="SPECIES")
+    ap.add_argument("--exclude", action="append", default=[], metavar="SPECIES",
+                    help="drop this species from the whole run (repeatable) "
+                         "-- e.g. a polyploid whose homeologs make "
+                         "single-copy orthology a poor fit. Excludes it from "
+                         "Stage 1 AND prunes the matching tip from --tree, "
+                         "so the two never drift out of sync.")
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--batch-size", type=int, default=1)
@@ -199,9 +207,26 @@ def main(argv=None) -> int:
     def want(n):
         return S[0] <= n <= S[1]
 
+    tree = args.tree
+    if args.exclude:
+        tree = run / "pruned_tree.nwk"
+        if not args.dry_run and (want(1) or want(4)):
+            prune_cmd = [sys.executable, str(PREP / "species_tree.py"), "prune",
+                        str(args.tree), "-o", str(tree)]
+            for sp in args.exclude:
+                prune_cmd += ["--drop", sp]
+            _log(run, f"pruning --exclude species from tree: "
+                      f"{', '.join(args.exclude)}")
+            subprocess.run(prune_cmd, check=True)
+        _log(run, f"--exclude {args.exclude}: dropped from Stage 1 input "
+                  f"and pruned from tree -> {tree}")
+
     if want(1):
-        _run(run, 1, [str(CORE / "01_common_scos.py"),
-                      str(args.busco_dir), "-o", str(d[1])], args.dry_run)
+        cmd = [str(CORE / "01_common_scos.py"), str(args.busco_dir),
+               "-o", str(d[1])]
+        for sp in args.exclude:
+            cmd += ["--exclude", sp]
+        _run(run, 1, cmd, args.dry_run)
     if want(2):
         cmd = [str(CORE / "02_extract_sco_seqs.py"),
                str(d[1] / "common_scos.tsv"),
@@ -215,7 +240,7 @@ def main(argv=None) -> int:
                       "-o", str(d[3]), "--jobs", str(args.jobs),
                       "--threads", str(args.threads)], args.dry_run)
     if want(4):
-        cmd = [str(CORE / "04_codeml_control.py"), "--tree", str(args.tree),
+        cmd = [str(CORE / "04_codeml_control.py"), "--tree", str(tree),
                "--stage3-dir", str(d[3]), "-o", str(d[4])]
         for sp in args.focal:
             cmd += ["--focal", sp]

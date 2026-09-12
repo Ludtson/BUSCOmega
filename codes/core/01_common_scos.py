@@ -129,12 +129,20 @@ def main(argv=None) -> int:
                     help="directory with one BUSCO output subdirectory per species")
     ap.add_argument("-o", "--out-dir", type=Path, default=Path("."),
                     help="where to write the two output tables (default: cwd)")
+    ap.add_argument("--exclude", action="append", default=[], metavar="SPECIES",
+                    help="drop this species from consideration entirely "
+                         "(repeatable) -- e.g. a polyploid whose homeologs "
+                         "make single-copy orthology a poor fit. Prune the "
+                         "matching tip from your tree too (species_tree.py "
+                         "prune), or use run_buscomega.py's own --exclude, "
+                         "which does both.")
     args = ap.parse_args(argv)
 
-    species_dirs = sorted(p for p in args.busco_parent.iterdir() if p.is_dir())
+    species_dirs = sorted(p for p in args.busco_parent.iterdir() if p.is_dir()
+                          and p.name not in set(args.exclude))
     if len(species_dirs) < 2:
-        ap.error(f"need >=2 species subdirectories in {args.busco_parent}, "
-                 f"found {len(species_dirs)}")
+        ap.error(f"need >=2 species subdirectories in {args.busco_parent} "
+                 f"after --exclude, found {len(species_dirs)}")
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
