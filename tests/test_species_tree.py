@@ -23,6 +23,15 @@ def test_clean_newick():
     # [&&NHX] comments
     assert mod.clean_newick("(A[&&NHX:x=1]:0.4,(B:0.1,C:0.1):0.2);") \
         == "(A,(B,C));"
+    # named internal node labels (RAxML/IQ-TREE "node_labels" style: N0, N11,
+    # ...), not just numeric support -- a real bug: these must be stripped
+    # the same as `)95`, or they get picked up as bogus extra tips.
+    assert mod.clean_newick(
+        "(Tcacao:0.19,((A:0.12,(B:0.06,C:0.03)N4:0.01)N2:0.09,D:0.14)N1:0.19)N0;"
+    ) == "(Tcacao,((A,(B,C)),D));"
+    assert mod.tip_labels(mod.clean_newick(
+        "(Tcacao:0.19,((A:0.12,(B:0.06,C:0.03)N4:0.01)N2:0.09,D:0.14)N1:0.19)N0;"
+    )) == ["Tcacao", "A", "B", "C", "D"]
     assert sorted(mod.tip_labels("((a_hal,b_sp),c_sp);")) == \
         ["a_hal", "b_sp", "c_sp"]
 

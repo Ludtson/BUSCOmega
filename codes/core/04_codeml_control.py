@@ -87,7 +87,12 @@ def stage_log(logpath: Path, stage: str, event: str, **fields) -> None:
 # minimal Newick handling -- topology only
 # --------------------------------------------------------------------------
 _BRLEN = re.compile(r":[0-9.eE+\-]+")
-_SUPPORT = re.compile(r"\)[0-9.]+")     # e.g. )95  or )0.98 internal support
+# Anything right after a ')' up to the next structural character is an
+# INTERNAL node label -- numeric support (`)95`) or a named internal node
+# (`)N11`, as RAxML/IQ-TREE "node_labels" output uses). A tip can never
+# immediately follow ')' (a ')' always closes a clade), so stripping this
+# unconditionally is safe and never touches a real tip name.
+_SUPPORT = re.compile(r"\)[^,():;]+")
 
 
 def strip_to_topology(newick: str) -> str:

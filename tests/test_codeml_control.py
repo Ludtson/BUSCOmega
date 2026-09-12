@@ -25,6 +25,14 @@ def test_newick_helpers():
     assert mod.strip_to_topology("(c:0.1,(a:0.2,b:0.3):0.4);") == "(c,(a,b));"
     assert sorted(mod.tip_labels(TREE)) == ["a_halleri", "a_thaliana",
                                             "c_grandiflora"]
+    # named internal node labels (e.g. RAxML/IQ-TREE "node_labels": N0, N11,
+    # ...) must be stripped like numeric support -- a real bug found on a
+    # 22-taxon tree: these were being picked up as bogus extra tips.
+    labelled_internal = ("(Tcacao:0.19,((A:0.12,(B:0.06,C:0.03)N4:0.01)N2:"
+                         "0.09,D:0.14)N1:0.19)N0;")
+    topo = mod.strip_to_topology(labelled_internal)
+    assert topo == "(Tcacao,((A,(B,C)),D));", topo
+    assert mod.tip_labels(topo) == ["Tcacao", "A", "B", "C", "D"]
     lab = mod.label_foreground(TREE, "a_halleri")
     assert lab == "(c_grandiflora,(a_halleri #1,a_thaliana));", lab
     assert lab.count("#1") == 1
