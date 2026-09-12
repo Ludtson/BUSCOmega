@@ -122,13 +122,14 @@ allowed to vary across*. Three axes: across sites, across branches, or both.
 | **Site models** (`NSsites 0 1 2 7 8` → M0, M1a, M2a, M7, M8) | **sites** (codons), same across all branches | "does this gene have *some codons* under positive selection, anywhere on the tree?" | site classes + a yes/no on positive selection (via LRT) |
 | **Branch-site model** (model A) | **both** — specific sites, on a specific labelled branch | "did specific residues of this gene switch to positive selection *on one particular lineage*?" | the most targeted positive-selection test |
 
-**Answering your question directly:** site models (M1a/M2a, M7/M8) tell you
-*whether* a gene has positively-selected sites — they do **not** tell you
-*which species/lineage*. They're tree-wide: one set of site classes applied
-across the whole tree. "Which lineage" is a **branch** or **branch-site**
-question, not a site-model question. So your recollection was half-right:
-site models = "is this gene adaptively evolving at some residues," full
-stop; the "in what species" part needs a different model.
+**A common point of confusion is worth heading off here.** Site models
+(M1a/M2a, M7/M8) answer *whether* a gene has positively-selected sites —
+they do **not** say *which* species or lineage. They are tree-wide: one
+set of site classes is fit across the whole tree at once. "Which lineage"
+is a **branch** or **branch-site** question, not a site-model question. In
+short: a site model tells you "this gene is adaptively evolving at some
+residues," full stop — the "in what species" part needs a different model
+family entirely.
 
 ### How the site-model test actually works (for reference)
 
@@ -197,7 +198,7 @@ codeml to estimate has to be "paid for" out of that budget.
   ~43 branches — the same few hundred codons now has to support ~10× as many
   free parameters. Result: unstable estimates, and lots of branches where dS
   came out near zero so ω is mathematically undefined (PAML reports these as
-  `999` or `0.0001` — you saw both in the pilot output).
+  `999` or `0.0001`; both boundary values show up in the pilot output — §8).
 - **Two-ratio** estimates *two* ω values (focal + background) no matter how
   big the tree is. The background ω is supported by every other branch
   pooled together, so it's well-constrained, which frees up the data to pin
