@@ -138,8 +138,10 @@ def main(argv=None) -> int:
                          "which does both.")
     args = ap.parse_args(argv)
 
+    exclude = set(args.exclude) | {"logs"}  # run_busco.py's own log dir,
+                                             # not a species output
     species_dirs = sorted(p for p in args.busco_parent.iterdir() if p.is_dir()
-                          and p.name not in set(args.exclude))
+                          and p.name not in exclude)
     if len(species_dirs) < 2:
         ap.error(f"need >=2 species subdirectories in {args.busco_parent} "
                  f"after --exclude, found {len(species_dirs)}")
