@@ -195,17 +195,30 @@ def main(argv=None) -> int:
               f"  jobs={args.jobs} threads={args.threads} "
               f"batch-size={args.batch_size}")
 
-    need_bins = {"mafft", "pal2nal.pl", "codeml"}
-    have = {b for b in need_bins if shutil.which(b)}
-    _log(run, f"tools on PATH: {', '.join(sorted(have)) or 'none'}"
-              + (f"  MISSING: {', '.join(sorted(need_bins - have))}"
-                 if need_bins - have else ""))
-
-    d = {n: run / STAGE_DIRS[n] for n in STAGE_DIRS}
     S = args.from_stage, args.to_stage
 
     def want(n):
         return S[0] <= n <= S[1]
+
+    # Stage 3 needs MAFFT+PAL2NAL, Stage 5 needs codeml -- check only the
+    # tools the stages actually being run need, and fail before ANY stage
+    # runs (not partway through, after Stage 1/2 already wrote output).
+    STAGE_TOOLS = {3: ("mafft", "pal2nal.pl"), 5: ("codeml",)}
+    need_bins = {t for stage, tools in STAGE_TOOLS.items() for t in tools}
+    have = {b for b in need_bins if shutil.which(b)}
+    _log(run, f"tools on PATH: {', '.join(sorted(have)) or 'none'}"
+              + (f"  MISSING: {', '.join(sorted(need_bins - have))}"
+                 if need_bins - have else ""))
+    missing_needed = {t for stage, tools in STAGE_TOOLS.items() if want(stage)
+                      for t in tools if t not in have}
+    if missing_needed and not args.dry_run:
+        _log(run, f"ERROR: missing required tool(s) for stages "
+                  f"{S[0]}-{S[1]}: {', '.join(sorted(missing_needed))}. "
+                  f"Activate the environment that has them (see "
+                  f"docs/install.md) and re-run -- nothing was run.")
+        return 1
+
+    d = {n: run / STAGE_DIRS[n] for n in STAGE_DIRS}
 
     tree = args.tree
     if args.exclude:
