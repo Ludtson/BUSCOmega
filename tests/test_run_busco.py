@@ -55,6 +55,25 @@ def test_complete_pct(tmp_path):
     assert abs(pct - 50.0) < 1e-6          # 2 Complete / 4 total
 
 
+def test_complete_pct_counts_duplicated_markers_once(tmp_path):
+    """A Duplicated marker gets one full_table.tsv row per retained copy
+    (e.g. a polyploid's homeologs) -- complete_pct() must count it as one
+    marker, not one row per copy, or a real polyploid's single-copy
+    fraction is understated the more copies it retains."""
+    polyploid = """# Busco id\tStatus\tSequence
+g1\tComplete\tp1
+g2\tDuplicated\tp2a
+g2\tDuplicated\tp2b
+g2\tDuplicated\tp2c
+g3\tMissing
+"""
+    run_dir = tmp_path / "poly" / "run_lineage"
+    run_dir.mkdir(parents=True)
+    (run_dir / "full_table.tsv").write_text(polyploid, encoding="utf-8")
+    pct = mod.complete_pct(tmp_path, "poly")
+    assert abs(pct - (100 / 3)) < 1e-6     # 1 Complete / 3 markers (g1,g2,g3)
+
+
 def test_end_to_end(tmp_path, monkeypatch):
     fasta_dir = tmp_path / "fasta"
     fasta_dir.mkdir()

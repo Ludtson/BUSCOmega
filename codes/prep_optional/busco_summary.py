@@ -70,6 +70,8 @@ def busco_table(folder):
     """
     busco_data = []
     for d in os.listdir(folder):
+        if d == "logs":  # run_busco.py's per-species log dir, not a BUSCO output
+            continue
         dir_path = os.path.join(folder, d)
         if os.path.isdir(dir_path):  # Only process directories
             species_name, busco_scores = busco_dir(dir_path)

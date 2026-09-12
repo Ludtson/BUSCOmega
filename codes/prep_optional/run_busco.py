@@ -96,17 +96,24 @@ def already_done(out_dir: Path, species: str) -> bool:
 
 
 def complete_pct(out_dir: Path, species: str) -> float | None:
+    """% of BUSCO markers single-copy Complete. A Duplicated marker gets one
+    full_table.tsv row per retained copy (2+ for a polyploid's homeologs),
+    so markers are counted once each by busco_id, not by row -- otherwise a
+    heavily-duplicated genome (real polyploidy, not a bad assembly) inflates
+    the row count and understates its own single-copy fraction."""
     hits = list((out_dir / species).glob("*/full_table.tsv"))
     if not hits:
         return None
-    total = complete = 0
+    status_by_id: dict[str, str] = {}
     for line in hits[0].read_text(encoding="utf-8", errors="ignore").splitlines():
         if line.startswith("#") or not line.strip():
             continue
-        total += 1
-        if line.split("\t")[1] == "Complete":
-            complete += 1
-    return 100 * complete / total if total else None
+        cols = line.split("\t")
+        status_by_id[cols[0]] = cols[1]
+    if not status_by_id:
+        return None
+    complete = sum(1 for s in status_by_id.values() if s == "Complete")
+    return 100 * complete / len(status_by_id)
 
 
 def run_one(species: str, fasta: Path, out_dir: Path, lineage: Path,
