@@ -18,7 +18,7 @@ not to be) sensitive to the estimation model.
 | **free-ratio on the concatenate** | `model=1` once on all genes joined into one alignment; read the terminal ω directly | the Galtier-lab / eLife approach (Bourguignon et al. 2024; Weyna et al. preprint), transcribed into codeml |
 
 If the four agree to ~2 decimals, the Ne proxy is robust to the model
-choice and the PI's "why not free-ratio" question is closed. The 3-taxon
+choice and the "why not free-ratio" question is closed. The 3-taxon
 pilot is the **weakest** case for free-ratio and 2-ratio to differ (only 3
 terminal branches, no internal branch); the comparison is more informative
 on the 23-taxon Chapter 3 set, where it should be re-run.

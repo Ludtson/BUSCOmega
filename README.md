@@ -21,7 +21,8 @@ orthologs, and reports one number per species with a confidence interval.
   what dropped, with the reason.
 
 The **why** is in [`docs/primer.md`](docs/primer.md); every parameter and
-its justification is in [`docs/methods.md`](docs/methods.md).
+its justification is in [`docs/methods.md`](docs/methods.md); environment
+setup and optional add-ons are in [`docs/install.md`](docs/install.md).
 
 ---
 
@@ -56,7 +57,8 @@ busco_out/
   ...
 ```
 
-`prep_optional/run_busco.sh` automates this if you need it.
+`prep_optional/run_busco.py` automates this if you need it — see
+[`codes/prep_optional/run_busco.md`](codes/prep_optional/run_busco.md).
 
 ---
 
