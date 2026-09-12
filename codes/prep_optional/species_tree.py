@@ -28,6 +28,12 @@ covers the two ways you get there.
             into a supermatrix and (optionally) run IQ-TREE to get one.
             The concat is stdlib; the tree search needs IQ-TREE 2.
 
+  prune     Drop one or more named tips (e.g. a polyploid species you're
+            excluding from Stage 1 with --exclude) and collapse any
+            internal node left with a single child. run_buscomega.py's own
+            --exclude does this automatically -- use this subcommand
+            directly only if you're not going through the orchestrator.
+
 Neither subcommand adds the `<ntax> 1` header or the ` #1` foreground
 labels -- those are run-specific and Stage 4 writes them. This helper's job
 ends at "a plain topology Newick with the correct tip names".
@@ -96,6 +102,57 @@ def apply_rename(topology: str, mapping: dict[str, str]) -> str:
         return mapping.get(name, name)
     # a tip token is bounded by ( , ) ;
     return re.sub(r"(?<=[(,])[^(),;]+(?=[,);])", repl, topology)
+
+
+def _parse_topology(body: str, i: int = 0):
+    """Recursive-descent parse of a bare topology (names + parens + commas,
+    no branch lengths/labels -- run clean_newick() first). A node is either
+    a tip name (str) or a list of child nodes. Returns (node, next_index)."""
+    if body[i] == "(":
+        children = []
+        i += 1
+        while True:
+            child, i = _parse_topology(body, i)
+            children.append(child)
+            if body[i] == ",":
+                i += 1
+                continue
+            if body[i] == ")":
+                i += 1
+                break
+        return children, i
+    j = i
+    while body[j] not in "(),;":
+        j += 1
+    return body[i:j], j
+
+
+def _serialize_topology(node) -> str:
+    if isinstance(node, str):
+        return node
+    return "(" + ",".join(_serialize_topology(c) for c in node) + ")"
+
+
+def prune_tips(topology: str, drop: set[str]) -> str:
+    """Drop one or more named tips from a bare topology, collapsing any
+    internal node left with a single child so the result is still a valid
+    binary/polytomous topology (codeml/tree tools reject a unary node)."""
+    root, _ = _parse_topology(topology.strip().rstrip(";"))
+
+    def _prune(node):
+        if isinstance(node, str):
+            return None if node in drop else node
+        kept = [k for k in (_prune(c) for c in node) if k is not None]
+        if not kept:
+            return None
+        if len(kept) == 1:
+            return kept[0]              # unary node -> collapse
+        return kept
+
+    result = _prune(root)
+    if result is None or isinstance(result, str):
+        raise ValueError("prune_tips: fewer than 2 tips remain after pruning")
+    return _serialize_topology(result) + ";"
 
 
 def read_rename(path: Path) -> dict[str, str]:
@@ -300,6 +357,29 @@ def cmd_prepare(args) -> int:
     return 0 if status == "ok" or not args.match_to else 1
 
 
+def cmd_prune(args) -> int:
+    topo = clean_newick(args.in_tree.read_text(encoding="utf-8"))
+    tips = set(tip_labels(topo))
+    drop = set(args.drop)
+    missing = drop - tips
+    if missing:
+        print(f"error: --drop name(s) not in the tree: {sorted(missing)}",
+              file=sys.stderr)
+        print(f"tree tips: {sorted(tips)}", file=sys.stderr)
+        return 1
+    try:
+        pruned = prune_tips(topo, drop)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    out = args.out or args.in_tree.with_name(args.in_tree.stem + ".pruned.nwk")
+    out.write_text(pruned + "\n", encoding="utf-8")
+    kept = tip_labels(pruned)
+    print(f"dropped {len(drop)} tip(s): {sorted(drop)}")
+    print(f"{len(kept)} tips -> {out}")
+    print("  " + ", ".join(kept))
+    return 0
+
+
 # --------------------------------------------------------------------------
 # supermatrix + IQ-TREE  (infer)
 # --------------------------------------------------------------------------
@@ -425,6 +505,14 @@ def main(argv=None) -> int:
                        "`prepare --rename`); confident matches only need a "
                        "glance, AMBIGUOUS / NO MATCH lines need fixing by hand")
     m.set_defaults(func=cmd_match)
+
+    r = sub.add_parser("prune", help="drop one or more tips from a Newick tree")
+    r.add_argument("in_tree", type=Path)
+    r.add_argument("--drop", action="append", required=True, metavar="TIP",
+                   help="tip name to remove (repeatable)")
+    r.add_argument("-o", "--out", type=Path,
+                   help="default: <in_tree stem>.pruned.nwk next to in_tree")
+    r.set_defaults(func=cmd_prune)
 
     q = sub.add_parser("infer", help="build a supermatrix and (optionally) run IQ-TREE")
     q.add_argument("aln_dir", type=Path,

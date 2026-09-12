@@ -70,6 +70,37 @@ def test_prepare_cli(tmp_path):
     assert rc2 == 1
 
 
+def test_prune_tips():
+    topo = "((SpeciesA,SpeciesB),(SpeciesC,SpeciesD));"
+    # dropping one tip of a cherry collapses the now-unary parent node
+    pruned = mod.prune_tips(topo, {"SpeciesB"})
+    assert pruned == "(SpeciesA,(SpeciesC,SpeciesD));"
+    assert set(mod.tip_labels(pruned)) == {"SpeciesA", "SpeciesC", "SpeciesD"}
+
+    # dropping two tips from different clades
+    pruned2 = mod.prune_tips(topo, {"SpeciesB", "SpeciesD"})
+    assert set(mod.tip_labels(pruned2)) == {"SpeciesA", "SpeciesC"}
+
+    # pruning down to <2 tips is an error, not a silently-broken tree
+    import pytest
+    with pytest.raises(ValueError):
+        mod.prune_tips(topo, {"SpeciesA", "SpeciesB", "SpeciesC"})
+
+
+def test_cmd_prune_cli(tmp_path):
+    intree = tmp_path / "in.nwk"
+    intree.write_text("((SpeciesA,SpeciesB),(SpeciesC,SpeciesD));\n")
+    out = tmp_path / "pruned.nwk"
+    rc = mod.main(["prune", str(intree), "--drop", "SpeciesB", "-o", str(out)])
+    assert rc == 0
+    assert set(mod.tip_labels(out.read_text())) == {"SpeciesA", "SpeciesC", "SpeciesD"}
+
+    # an unknown --drop name fails loudly rather than silently no-op'ing
+    rc2 = mod.main(["prune", str(intree), "--drop", "NotInTree",
+                    "-o", str(tmp_path / "o2.nwk")])
+    assert rc2 == 1
+
+
 def test_build_supermatrix(tmp_path):
     d = tmp_path / "prot_aln"
     d.mkdir()
