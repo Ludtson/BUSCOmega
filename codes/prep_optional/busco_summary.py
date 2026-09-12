@@ -52,10 +52,21 @@ def busco_dir(dir_name):
     Returns:
         tuple: species name and a list of BUSCO scores.
     """
-    for file in os.listdir(dir_name):
+    entries = os.listdir(dir_name)
+    for file in entries:
         if re.search(r"^short_summary", file) and file.endswith('.txt'):
             return parse_busco_output(os.path.join(dir_name, file))
-    logging.warning(f"No short_summary text file found in directory: {dir_name}")
+    # Only warn if this otherwise looks like BUSCO output (a run_<lineage>/
+    # subdir) with a missing summary -- not for an unrelated directory that
+    # happens to sit next to the species folders (e.g. run_busco.py's own
+    # logs/, or any other non-BUSCO subdirectory a wrapper might add).
+    looks_like_busco_output = any(
+        entry.startswith("run_") and
+        os.path.isdir(os.path.join(dir_name, entry))
+        for entry in entries
+    )
+    if looks_like_busco_output:
+        logging.warning(f"No short_summary text file found in directory: {dir_name}")
     return "", []
 
 def busco_table(folder):
@@ -70,8 +81,6 @@ def busco_table(folder):
     """
     busco_data = []
     for d in os.listdir(folder):
-        if d == "logs":  # run_busco.py's per-species log dir, not a BUSCO output
-            continue
         dir_path = os.path.join(folder, d)
         if os.path.isdir(dir_path):  # Only process directories
             species_name, busco_scores = busco_dir(dir_path)

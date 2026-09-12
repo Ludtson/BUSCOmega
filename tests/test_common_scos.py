@@ -59,6 +59,26 @@ def test_common_set_and_summary(tmp_path):
           "| recoverable:", {s: srow[s][-1] for s in ("sp1", "sp2", "sp3")})
 
 
+def test_non_species_subdir_skipped_by_content_not_name(tmp_path):
+    """A subdirectory with no full_table.tsv is skipped as non-species
+    regardless of its name -- not just a hardcoded "logs" -- since a
+    different BUSCO wrapper/version could name its own auxiliary dir
+    anything at all. This one is deliberately named something run_busco.py
+    would never produce, to prove the check isn't a name blocklist."""
+    import shutil
+    busco_parent = tmp_path / "busco_out"
+    shutil.copytree(FIXTURE, busco_parent)
+    stray = busco_parent / "some_other_wrappers_cache_dir"
+    stray.mkdir()
+    (stray / "readme.txt").write_text("not a species", encoding="utf-8")
+
+    rc = mod.main([str(busco_parent), "-o", str(tmp_path / "out")])
+    assert rc == 0
+    ids = [r.split("\t")[0] for r in
+          (tmp_path / "out" / "common_scos.tsv").read_text().splitlines()[1:]]
+    assert ids == ["geneA", "geneB", "geneF"]
+
+
 def test_exclude_drops_species_from_consideration(tmp_path):
     """--exclude sp3 removes it from both the species set and the
     intersection -- geneC, which only sp3 sole-blocked (Duplicated), should

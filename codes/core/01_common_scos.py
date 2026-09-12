@@ -138,10 +138,27 @@ def main(argv=None) -> int:
                          "which does both.")
     args = ap.parse_args(argv)
 
-    exclude = set(args.exclude) | {"logs"}  # run_busco.py's own log dir,
-                                             # not a species output
-    species_dirs = sorted(p for p in args.busco_parent.iterdir() if p.is_dir()
-                          and p.name not in exclude)
+    # A species subdirectory is identified by containing a full_table.tsv,
+    # not by name -- so any non-species entry (run_busco.py's own logs/,
+    # a future wrapper's cache dir, anything else that isn't BUSCO output)
+    # is skipped on its own merits instead of a growing blocklist of names.
+    exclude = set(args.exclude)
+    species_dirs = []
+    species_ft: dict[str, Path] = {}
+    skipped_non_species = []
+    for p in sorted(args.busco_parent.iterdir()):
+        if not p.is_dir() or p.name in exclude:
+            continue
+        try:
+            species_ft[p.name] = find_full_table(p)
+        except FileNotFoundError:
+            skipped_non_species.append(p.name)
+            continue
+        species_dirs.append(p)
+    if skipped_non_species:
+        print(f"skipping {len(skipped_non_species)} subdirectory(ies) with no "
+              f"full_table.tsv (not BUSCO species output): "
+              f"{', '.join(skipped_non_species)}", file=sys.stderr)
     if len(species_dirs) < 2:
         ap.error(f"need >=2 species subdirectories in {args.busco_parent} "
                  f"after --exclude, found {len(species_dirs)}")
@@ -157,7 +174,7 @@ def main(argv=None) -> int:
     per_species_counts: dict[str, dict[str, int]] = {}
     per_species_status: dict[str, dict[str, str]] = {}
     for d in species_dirs:
-        ft = find_full_table(d)
+        ft = species_ft[d.name]
         complete, counts, status_by_id = parse_full_table(ft)
         per_species_complete[d.name] = complete
         per_species_counts[d.name] = counts
