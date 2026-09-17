@@ -84,6 +84,12 @@ python run_buscomega.py \
 (default: every tip in the tree). `--from-stage N` / `--resume` restart a
 run that stopped partway. `--dry-run` prints the plan.
 
+Every script here starts with `#!/usr/bin/env python3`, but git does not
+mark them executable, so `./run_buscomega.py ...` needs a one-time
+`chmod +x run_buscomega.py` first (Linux/WSL only — Windows ignores
+shebangs regardless). `python run_buscomega.py ...` always works, with no
+setup, on either.
+
 Species names come from the BUSCO folder names and must match the
 proteome/CDS filenames (`species_A.faa`, `species_A.fna`) and the tree tips.
 
