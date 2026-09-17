@@ -30,7 +30,14 @@ genes with replacement, recompute pooled omega, report the 2.5/97.5 percentiles.
 
 Input (one of):
     --records-dir DIR   directory of Stage 6 tables: m0_records.tsv and
-                        one two_ratio.<species>_records.tsv per focal species
+                        one two_ratio.<species>_records.tsv per focal species.
+                        If free_ratio_records.tsv is also present (Stage 4
+                        run with --analyses including free_ratio), each
+                        species' pooled free-ratio omega is added as a
+                        robustness comparison against the 2-ratio number --
+                        pooled the same way (filter_focal + pooled_omega),
+                        just read from the one shared free_ratio analysis
+                        instead of a per-species 2-ratio run.
     --stage5-dir DIR    a Stage 5 out-dir; Stage 6 is run on it first
                         (needs 06_parse_codeml_output.py alongside this file)
 
@@ -435,6 +442,11 @@ def main(argv=None) -> int:
     src.add_argument("--stage5-dir", type=Path,
                      help="a Stage 5 out-dir; Stage 6 is run on it first")
     ap.add_argument("-o", "--out-dir", type=Path, default=Path("07_ne_proxy"))
+    ap.add_argument("--concat-tsv", type=Path,
+                    help="08_free_ratio_concat.py's free_ratio_concat.tsv -- "
+                         "adds an omega_free_ratio_concat column, one direct "
+                         "value per species (no pooling: a concatenate is "
+                         "already one 'gene')")
     ap.add_argument("--ds-ceiling", type=float, default=DS_CEILING_DEFAULT,
                     help=f"drop a gene's contribution to a lineage when its dS "
                          f"there exceeds this (default {DS_CEILING_DEFAULT})")
@@ -455,11 +467,26 @@ def main(argv=None) -> int:
 
     m0_path = rec_dir / "m0_records.tsv"
     tr_paths = sorted(rec_dir.glob("two_ratio.*_records.tsv"))
+    fr_path = rec_dir / "free_ratio_records.tsv"
+    have_fr = fr_path.exists()
+    # one shared free_ratio analysis covers every species (every branch gets
+    # its own omega in a single codeml run) -- filter_focal() by tip below
+    # is the same per-species selection two_ratio uses, just on this table
+    fr_rows_all = read_records(fr_path) if have_fr else []
+    concat_omega: dict[str, float] = {}
+    if args.concat_tsv:
+        if not args.concat_tsv.exists():
+            ap.error(f"--concat-tsv not found: {args.concat_tsv}")
+        chdr, *crows = args.concat_tsv.read_text().splitlines()
+        ci = chdr.split("\t")
+        for cr in crows:
+            cd = dict(zip(ci, cr.split("\t")))
+            concat_omega[cd["species"]] = float(cd["omega"])
     if not tr_paths and not m0_path.exists():
         ap.error(f"no m0_records.tsv or two_ratio.*_records.tsv in {rec_dir}")
     stage_log(log, "stage7", "start", focal_species=len(tr_paths),
               ds_ceiling=args.ds_ceiling, bootstrap=args.bootstrap,
-              m0=m0_path.exists())
+              m0=m0_path.exists(), free_ratio=have_fr)
 
     omega_m0 = float("nan")
     m0_ci = (float("nan"), float("nan"))
@@ -500,10 +527,16 @@ def main(argv=None) -> int:
                 m0_lnl.setdefault(r.gene_id, r.lnL)
     CHI2_1DF_P05 = 3.841
 
-    proxy_rows = ["species\tomega_pooled\tci_lo\tci_hi\tn_genes\t"
-                  "n_excl_ds_floor\tn_excl_ds_ceiling\tmean_omega\t"
-                  "median_omega\tmean_t\tomega_M0\tomega_M0_ci_lo\t"
-                  "omega_M0_ci_hi\tn_lrt\tn_lrt_p05\tfrac_lrt_p05\tmean_lrt"]
+    proxy_header = ("species\tomega_pooled\tci_lo\tci_hi\tn_genes\t"
+                    "n_excl_ds_floor\tn_excl_ds_ceiling\tmean_omega\t"
+                    "median_omega\tmean_t\tomega_M0\tomega_M0_ci_lo\t"
+                    "omega_M0_ci_hi\tn_lrt\tn_lrt_p05\tfrac_lrt_p05\tmean_lrt")
+    if have_fr:
+        proxy_header += ("\tomega_free_ratio\tomega_free_ratio_ci_lo\t"
+                         "omega_free_ratio_ci_hi\tn_genes_free_ratio")
+    if concat_omega:
+        proxy_header += "\tomega_free_ratio_concat"
+    proxy_rows = [proxy_header]
     per_gene = ["species\tgene_id\tN\tS\tdN\tdS\tomega\tt\tqc_flag\tused\texcl_reason"]
     forest, dists, pooled_by_sp, tvst = {}, {}, {}, []
     lrt_by_sp, lrt_stats = {}, {}
@@ -539,11 +572,20 @@ def main(argv=None) -> int:
             lrt_stats[species] = dict(n=n_lrt, n_sig=n_sig, frac=frac_sig,
                                       mean=mean_lrt)
 
-        proxy_rows.append(
-            f"{species}\t{om:.6f}\t{lo:.6f}\t{hi:.6f}\t{len(used)}\t"
-            f"{n_floor}\t{n_ceil}\t{mean_o:.6f}\t{med_o:.6f}\t{mean_t:.6f}\t"
-            f"{omega_m0:.6f}\t{m0_ci[0]:.6f}\t{m0_ci[1]:.6f}\t{n_lrt}\t"
-            f"{n_sig}\t{frac_sig:.4f}\t{mean_lrt:.4f}")
+        row = (f"{species}\t{om:.6f}\t{lo:.6f}\t{hi:.6f}\t{len(used)}\t"
+              f"{n_floor}\t{n_ceil}\t{mean_o:.6f}\t{med_o:.6f}\t{mean_t:.6f}\t"
+              f"{omega_m0:.6f}\t{m0_ci[0]:.6f}\t{m0_ci[1]:.6f}\t{n_lrt}\t"
+              f"{n_sig}\t{frac_sig:.4f}\t{mean_lrt:.4f}")
+        if have_fr:
+            # same per-species selection two_ratio uses (filter_focal by
+            # tip), just applied to the one shared free_ratio table
+            fr_used, _, _, _ = filter_focal(fr_rows_all, species, args.ds_ceiling)
+            om_fr = pooled_omega(fr_used)
+            fr_lo, fr_hi = bootstrap_ci(fr_used, args.bootstrap, args.seed)
+            row += f"\t{om_fr:.6f}\t{fr_lo:.6f}\t{fr_hi:.6f}\t{len(fr_used)}"
+        if concat_omega:
+            row += f"\t{concat_omega[species]:.6f}" if species in concat_omega else "\t"
+        proxy_rows.append(row)
         for r, is_used, reason in annot:
             per_gene.append(
                 f"{species}\t{r.gene_id}\t{r.N:.1f}\t{r.S:.1f}\t{r.dN:.5f}\t"
@@ -557,7 +599,9 @@ def main(argv=None) -> int:
               f"[{lo:.4f}, {hi:.4f}]  (n={len(used)}, "
               f"-{n_floor} ds_floor, -{n_ceil} ds>{args.ds_ceiling})"
               + (f"  |  LRT vs M0: {n_sig}/{n_lrt} genes p<0.05 "
-                 f"({frac_sig:.1%}, exp. 5%)" if n_lrt else ""))
+                 f"({frac_sig:.1%}, exp. 5%)" if n_lrt else "")
+              + (f"  |  free-ratio pooled = {om_fr:.4f} (n={len(fr_used)})"
+                 if have_fr else ""))
 
     (args.out_dir / "ne_proxy.tsv").write_text(
         "\n".join(proxy_rows) + "\n", encoding="utf-8")

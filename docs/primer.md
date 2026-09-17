@@ -204,8 +204,12 @@ codeml to estimate has to be "paid for" out of that budget.
   pooled together, so it's well-constrained, which frees up the data to pin
   down the focal branch. Stable regardless of taxon count.
 
-That's the whole reason for the choice. It costs more codeml runs (one per
-focal species instead of one total), but each estimate is trustworthy.
+That's the whole reason two-ratio is the default. It costs more codeml runs
+(one per focal species instead of one total), but each estimate is
+trustworthy. Free-ratio is still available (`--analyses ...,free_ratio`, or
+the concatenate layout via `--free-ratio-concat`) as a robustness check
+against the two-ratio number — worth running to confirm the two agree, not
+as a substitute for two-ratio's stability.
 
 ---
 
@@ -510,7 +514,7 @@ Per gene:
 | **codeml** | the PAML program that fits codon substitution models and estimates dN, dS, ω. |
 | **M0 (one-ratio)** | `model=0`: a single ω for the whole gene on the whole tree. BUSCOmega's baseline / null. |
 | **branch model** | ω is allowed to differ *between branches* (lineages), the same across all codons. |
-| **free-ratio** (`model=1`) | a branch model with a separate ω on *every* branch. Many parameters, noisy on single genes — BUSCOmega does not use it. |
+| **free-ratio** (`model=1`) | a branch model with a separate ω on *every* branch. Many parameters, noisy on single genes — not BUSCOmega's default, but available as an opt-in robustness check (§7). |
 | **two-ratio** (`model=2`) | a branch model with exactly two ω classes: the labelled "foreground" branch, and everything else ("background"). BUSCOmega's engine. |
 | **site model** | ω differs *between codons*, the same across all branches. Tests for positively-selected sites; tree-wide, so it can't say *which lineage*. |
 | **branch-site model** | ω differs across both specific codons and a specific labelled branch. The most targeted positive-selection test. |

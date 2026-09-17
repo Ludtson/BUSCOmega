@@ -14,6 +14,35 @@ sys.modules[spec.name] = mod
 spec.loader.exec_module(mod)
 
 
+def test_dry_run_wires_analyses_and_free_ratio_concat(tmp_path, capsys):
+    """--analyses passes through to Stage 4; --free-ratio-concat inserts
+    Stage 8 between Stage 6 and Stage 7 and feeds Stage 7 --concat-tsv."""
+    busco = tmp_path / "busco_out"
+    for sp in ("sp1", "sp2", "sp3"):
+        d = busco / sp / "run_x"
+        d.mkdir(parents=True)
+        (d / "full_table.tsv").write_text("g1\tComplete\tp1\n", encoding="utf-8")
+    tree = tmp_path / "tree.nwk"
+    tree.write_text("(sp1,sp2,sp3);\n")
+    out = tmp_path / "run"
+
+    rc = mod.main(["--busco-dir", str(busco), "--prt-dir", str(tmp_path / "prt"),
+                  "--cds-dir", str(tmp_path / "cds"), "--tree", str(tree),
+                  "-o", str(out), "--analyses", "m0,two_ratio,free_ratio",
+                  "--free-ratio-concat", "--dry-run"])
+    assert rc == 0
+    log = capsys.readouterr().out
+
+    assert "--analyses m0,two_ratio,free_ratio" in log
+    stage8_pos = log.index("stage 8:")
+    stage6_pos = log.index("stage 6:")
+    stage7_pos = log.index("stage 7:")
+    assert stage6_pos < stage8_pos < stage7_pos      # 8 runs between 6 and 7
+    assert "08_free_ratio_concat.py" in log
+    assert "--concat-tsv" in log and "free_ratio_concat.tsv" in log
+    print("orchestrator OK: --analyses and --free-ratio-concat wired correctly")
+
+
 def _mkrun(root: Path):
     (root / "01_common_scos").mkdir(parents=True)
     (root / "02_sequences").mkdir()

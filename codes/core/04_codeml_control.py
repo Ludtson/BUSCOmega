@@ -4,13 +4,25 @@
 
 Stage 4 of BUSCOmega: set up the codeml analyses.
 
-Two analyses per gene:
-  - M0        one omega tree-wide  (model=0, NSsites=0)
-              -> the genome-wide dN/dS = the Ne proxy, and the null for a
-                 likelihood-ratio test
-  - 2-ratio   the focal species' terminal branch as foreground `#1`,
-              everything else background  (model=2, NSsites=0)
-              -> that lineage's own omega. One run per focal species.
+Up to three analyses per gene (--analyses picks which):
+  - M0          one omega tree-wide  (model=0, NSsites=0)
+                -> the genome-wide dN/dS = the Ne proxy, and the null for a
+                   likelihood-ratio test
+  - 2-ratio     the focal species' terminal branch as foreground `#1`,
+                everything else background  (model=2, NSsites=0)
+                -> that lineage's own omega. One run per focal species.
+                Default headline method: one focal species at a time keeps
+                the estimate local to that lineage.
+  - free_ratio  every branch gets its own omega  (model=1, NSsites=0).
+                One run total (not one per focal species) -- every species'
+                terminal-branch omega comes out of that same run, pooled
+                across genes by Stage 7 exactly like 2-ratio is. OPT-IN,
+                not the default: model=1 has more free parameters than
+                2-ratio, so any one gene's per-branch estimate is noisier.
+                Pilot validation (analysis/compare_omega_methods.py) found
+                free-ratio and 2-ratio agree to ~2% once pooled the same
+                way -- use it as a robustness check against 2-ratio, not
+                as a replacement for it.
 
 The seqfile changes every gene, but the tree and every model parameter are
 constant across all genes of an analysis. So Stage 4 does NOT write a
@@ -70,6 +82,7 @@ PH_NDATA = "__NDATA__"
 ANALYSIS_MODELS = {
     "m0": (0, "0"),
     "two_ratio": (2, "0"),
+    "free_ratio": (1, "0"),
 }
 
 
@@ -212,7 +225,9 @@ def main(argv=None) -> int:
                     help="species to get a 2-ratio run (repeatable; "
                          "default: every tip in the tree)")
     ap.add_argument("--analyses", default="m0,two_ratio",
-                    help="comma list from {m0,two_ratio} (default both)")
+                    help="comma list from {m0,two_ratio,free_ratio} "
+                         "(default: m0,two_ratio -- free_ratio is opt-in, "
+                         "see the module docstring)")
     ap.add_argument("--codon-freq", type=int, default=2, choices=[0, 1, 2, 3])
     ap.add_argument("--kappa", type=float, default=2.0)
     ap.add_argument("--fix-kappa", action="store_true")

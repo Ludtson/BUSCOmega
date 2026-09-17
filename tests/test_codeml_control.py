@@ -112,6 +112,31 @@ def test_main_focal_subset(tmp_path):
     assert not (out / "ctl" / "m0.ctl").exists()
 
 
+def test_main_free_ratio(tmp_path):
+    """free_ratio is one analysis total (not one per focal species), uses
+    the plain m0 tree (no #1 foreground label -- every branch gets its own
+    omega already), and gets its own ctl template with model=1."""
+    tree = tmp_path / "sp.nwk"
+    tree.write_text(TREE + "\n")
+    out = tmp_path / "04_codeml"
+    rc = mod.main(["--tree", str(tree), "-o", str(out),
+                   "--analyses", "m0,two_ratio,free_ratio"])
+    assert rc == 0
+
+    fr = (out / "ctl" / "free_ratio.ctl").read_text()
+    assert "model = 1" in fr
+
+    plan = (out / "stage4_analyses.tsv").read_text().splitlines()[1:]
+    rows = {ln.split("\t")[0]: ln.split("\t") for ln in plan}
+    assert "free_ratio" in rows, rows.keys()          # exactly one row
+    _, typ, model, nssites, treefile, ctl = rows["free_ratio"]
+    assert typ == "free_ratio" and model == "1" and nssites == "0"
+    assert treefile == "trees/m0.nwk"                 # not a labelled tree
+    assert ctl == "ctl/free_ratio.ctl"
+
+    print("stage 4 OK: free_ratio plans as a single unlabelled-tree analysis")
+
+
 def test_tree_data_mismatch(tmp_path, capsys=None):
     tree = tmp_path / "sp.nwk"
     tree.write_text("(c_grandiflora,(a_halleri,a_lyrata));\n")
