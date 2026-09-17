@@ -108,6 +108,44 @@ def test_end_to_end(tmp_path):
     print("stage 7 OK: per-species pooled omega, filtering, plots")
 
 
+def test_free_ratio_column_optional(tmp_path):
+    """free_ratio_records.tsv is optional: absent -> unchanged schema
+    (no free_ratio columns at all); present -> one shared analysis pooled
+    per species the same way two_ratio is, added as extra columns."""
+    rd = tmp_path / "06_parsed"
+    rd.mkdir()
+    _write(rd / "m0_records.tsv",
+           [_row("g1", "spA", 300, 100, 0.005, 0.10),
+            _row("g1", "spB", 300, 100, 0.005, 0.10)])
+    _write(rd / "two_ratio.spA_records.tsv",
+           [_row("g1", "spA", 300, 100, 0.004, 0.10)])
+    _write(rd / "two_ratio.spB_records.tsv",
+           [_row("g1", "spB", 300, 100, 0.010, 0.10)])
+
+    out_no_fr = tmp_path / "07_no_fr"
+    mod.main(["--records-dir", str(rd), "-o", str(out_no_fr), "--bootstrap", "20"])
+    hdr_no_fr = (out_no_fr / "ne_proxy.tsv").read_text().splitlines()[0]
+    assert "free_ratio" not in hdr_no_fr
+
+    # one shared free_ratio analysis: both species' branches in one table
+    _write(rd / "free_ratio_records.tsv",
+           [_row("g1", "spA", 300, 100, 0.003, 0.10),
+            _row("g1", "spB", 300, 100, 0.009, 0.10)])
+    out = tmp_path / "07"
+    rc = mod.main(["--records-dir", str(rd), "-o", str(out), "--bootstrap", "20"])
+    assert rc == 0
+
+    proxy = (out / "ne_proxy.tsv").read_text().splitlines()
+    hdr = proxy[0].split("\t")
+    assert {"omega_free_ratio", "omega_free_ratio_ci_lo",
+           "omega_free_ratio_ci_hi", "n_genes_free_ratio"} <= set(hdr)
+    recs = {r.split("\t")[0]: dict(zip(hdr, r.split("\t"))) for r in proxy[1:]}
+    assert abs(float(recs["spA"]["omega_free_ratio"]) - 0.03) < 1e-6   # 0.003/0.10
+    assert abs(float(recs["spB"]["omega_free_ratio"]) - 0.09) < 1e-6   # 0.009/0.10
+    assert recs["spA"]["n_genes_free_ratio"] == "1"
+    print("stage 7 OK: free_ratio column optional, pooled per species like two_ratio")
+
+
 if __name__ == "__main__":
     import tempfile
     test_pooled_omega()

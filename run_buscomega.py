@@ -13,6 +13,8 @@ run_summary.tsv, and the regenerable gene-tracking audit.
         -o           <run_dir> \
         [--focal SP ...]   (default: every tip in the tree) \
         [--exclude SP ...] (drops it from Stage 1 AND prunes its tree tip) \
+        [--analyses m0,two_ratio,free_ratio]  (free_ratio is opt-in) \
+        [--free-ratio-concat]  (adds the concatenate-layout comparison too) \
         [--jobs N] [--threads N] [--batch-size N] \
         [--ds-ceiling 1.5] [--bootstrap 1000] [--png] \
         [--cds-suffix-strip .p ...] \
@@ -45,6 +47,7 @@ PREP = Path(__file__).resolve().parent / "codes" / "prep_optional"
 STAGE_DIRS = {
     1: "01_common_scos", 2: "02_sequences", 3: "03_alignments",
     4: "04_codeml", 5: "05_codeml_out", 6: "06_parsed", 7: "07_ne_proxy",
+    8: "08_free_ratio_concat",
 }
 
 
@@ -172,6 +175,17 @@ def main(argv=None) -> int:
                          "single-copy orthology a poor fit. Excludes it from "
                          "Stage 1 AND prunes the matching tip from --tree, "
                          "so the two never drift out of sync.")
+    ap.add_argument("--analyses", default="m0,two_ratio",
+                    help="passed through to Stage 4: comma list from "
+                         "{m0,two_ratio,free_ratio} (default: m0,two_ratio). "
+                         "free_ratio is opt-in -- one shared run, pooled "
+                         "per species by Stage 7, for comparison against "
+                         "the 2-ratio number, not a replacement for it.")
+    ap.add_argument("--free-ratio-concat", action="store_true",
+                    help="also run Stage 8 (free-ratio on one concatenated "
+                         "alignment, the eLife/Galtier-lab layout) and feed "
+                         "its result into Stage 7 as omega_free_ratio_concat. "
+                         "Independent of --analyses; needs Stage 3's output.")
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--batch-size", type=int, default=1)
@@ -205,12 +219,16 @@ def main(argv=None) -> int:
     # runs (not partway through, after Stage 1/2 already wrote output).
     STAGE_TOOLS = {3: ("mafft", "pal2nal.pl"), 5: ("codeml",)}
     need_bins = {t for stage, tools in STAGE_TOOLS.items() for t in tools}
+    if args.free_ratio_concat:
+        need_bins.add("codeml")
     have = {b for b in need_bins if shutil.which(b)}
     _log(run, f"tools on PATH: {', '.join(sorted(have)) or 'none'}"
               + (f"  MISSING: {', '.join(sorted(need_bins - have))}"
                  if need_bins - have else ""))
     missing_needed = {t for stage, tools in STAGE_TOOLS.items() if want(stage)
                       for t in tools if t not in have}
+    if args.free_ratio_concat and want(7) and "codeml" not in have:
+        missing_needed.add("codeml")
     if missing_needed and not args.dry_run:
         _log(run, f"ERROR: missing required tool(s) for stages "
                   f"{S[0]}-{S[1]}: {', '.join(sorted(missing_needed))}. "
@@ -254,7 +272,8 @@ def main(argv=None) -> int:
                       "--threads", str(args.threads)], args.dry_run)
     if want(4):
         cmd = [str(CORE / "04_codeml_control.py"), "--tree", str(tree),
-               "--stage3-dir", str(d[3]), "-o", str(d[4])]
+               "--stage3-dir", str(d[3]), "-o", str(d[4]),
+               "--analyses", args.analyses]
         for sp in args.focal:
             cmd += ["--focal", sp]
         _run(run, 4, cmd, args.dry_run)
@@ -268,10 +287,16 @@ def main(argv=None) -> int:
     if want(6):
         _run(run, 6, [str(CORE / "06_parse_codeml_output.py"),
                       "--stage5-dir", str(d[5]), "-o", str(d[6])], args.dry_run)
+    if args.free_ratio_concat and want(7):
+        _run(run, 8, [str(CORE / "08_free_ratio_concat.py"),
+                      "--aln-dir", str(d[3] / "codon_aln"), "--tree", str(tree),
+                      "-o", str(d[8])], args.dry_run)
     if want(7):
         cmd = [str(CORE / "07_ne_proxy.py"), "--records-dir", str(d[6]),
                "-o", str(d[7]), "--ds-ceiling", str(args.ds_ceiling),
                "--bootstrap", str(args.bootstrap)]
+        if args.free_ratio_concat:
+            cmd += ["--concat-tsv", str(d[8] / "free_ratio_concat.tsv")]
         if args.png:
             cmd.append("--png")
         _run(run, 7, cmd, args.dry_run)

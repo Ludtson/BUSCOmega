@@ -158,8 +158,9 @@ species' ω is actually distinguishable from the fixed model:
 single-copy orthologs, compared within a clade.
 
 **Is not** (by design): a positive-selection scan (site / branch-site
-models), a free-ratio pipeline, an ancestral-lineage tool, a
-gene-family/paralog analysis, or an isoform selector. See
+models), an ancestral-lineage tool, a gene-family/paralog analysis, or an
+isoform selector. Free-ratio is available as an opt-in robustness check
+against the default 2-ratio method, not a replacement for it. See
 [`docs/methods.md`](docs/methods.md) "Scope and boundaries".
 
 ---

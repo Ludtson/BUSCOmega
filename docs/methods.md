@@ -42,10 +42,11 @@ already chains 5 -> 6 -> 7 via `--stage5-dir`.
 | 1 | `core/01_common_scos.py` | done | the `full_table.tsv` files -> `common_scos.tsv` (single-copy in every species + per-species protein ID) + `busco_status_summary.tsv` |
 | 2 | `core/02_extract_sco_seqs.py` | done | `common_scos.tsv` + per-species protein & CDS FASTAs -> one protein file + one CDS file per gene, each with all species |
 | 3 | `core/03_codon_align.py` | done | per-gene protein + CDS files -> per-gene protein alignments (MAFFT) and codon alignments (`.pml`, PAL2NAL) |
-| 4 | `core/04_codeml_control.py` | done | species tree -> labelled trees + one control-file template per analysis (M0, 2-ratio) + the analysis plan |
+| 4 | `core/04_codeml_control.py` | done | species tree -> labelled trees + one control-file template per analysis (M0, 2-ratio, opt-in free_ratio) + the analysis plan |
 | 5 | `core/05_run_codeml.py` | done | Stage 4 plan + Stage 3 `codon_aln/` -> per-batch codeml `.mlc` result files |
 | 6 | `core/06_parse_codeml_output.py` | done | Stage 5 `.mlc` files -> per-analysis `*_records.tsv` (per-gene, per-branch dN/dS + QC) |
-| 7 | `core/07_ne_proxy.py` | done | the `*_records.tsv` -> per-species count-pooled ω + bootstrap CI + plots |
+| 7 | `core/07_ne_proxy.py` | done | the `*_records.tsv` (+ optional Stage 8 `free_ratio_concat.tsv`) -> per-species count-pooled ω + bootstrap CI + plots |
+| 8 (opt-in) | `core/08_free_ratio_concat.py` | done | Stage 3 `codon_aln/` + tree -> one concatenated alignment, one free-ratio codeml run, per-species ω with no pooling (the eLife/Galtier-lab layout). Not run by default; `run_buscomega.py --free-ratio-concat`. |
 | — | `legacy/merge_busco_table.py` | superseded | old Stage 1, replaced by `01_common_scos.py`; kept for reference |
 | — | `legacy/busco_seq_extractor.py` | superseded | old Stage 2 (fuzzy substring ID matching); replaced by `02_extract_sco_seqs.py` |
 | — | `legacy/run_mafft.sh`, `legacy/run_pal2nal.sh` | superseded | old Stage 3 (two bash scripts, timestamped outputs, `-nogap -nomismatch`); replaced by `03_codon_align.py` |
@@ -618,17 +619,31 @@ the stop-stripper as unit tests.
 timestamp-named `.ctrl` per gene, defaulted `cleandata=0`, and had no
 branch model.
 
-**Two analyses per gene:**
+**Up to three analyses per gene** (`--analyses`; default is the first two):
 
 | analysis | codeml | gives you |
 |---|---|---|
 | **M0** | `model=0 NSsites=0` | one ω for the whole tree — the genome-wide dN/dS used as the Ne proxy, and the null for an LRT |
-| **2-ratio** | `model=2 NSsites=0`, focal tip = `#1` | that lineage's own terminal-branch ω against a shared background. One run per focal species. |
+| **2-ratio** | `model=2 NSsites=0`, focal tip = `#1` | that lineage's own terminal-branch ω against a shared background. One run per focal species. Default headline method. |
+| **free_ratio** (opt-in) | `model=1 NSsites=0` | every branch gets its own ω. **One run total**, not one per focal species — every species' terminal branch comes out of that same run, pooled across genes by Stage 7 exactly like 2-ratio is (`omega_free_ratio` column). |
 
-Not free-ratio (`model=1`) — a separate ω on every branch is too many
-parameters for single-gene alignments and the estimates are noisy. Not
-branch-site — that tests for positive selection *at sites on* the focal
-branch, which is a different question from "what is this lineage's ω".
+`free_ratio` is opt-in, not the default: a separate ω on every branch is
+more parameters than 2-ratio asks of a single-gene alignment, so any one
+gene's per-branch estimate is noisier (primer §7). Pilot validation
+(`analysis/compare_omega_methods.py`) found free-ratio and 2-ratio agree to
+~2% once pooled the same way — use it as a robustness check against
+2-ratio, not a replacement for it. Not branch-site — that tests for
+positive selection *at sites on* the focal branch, a different question
+from "what is this lineage's ω".
+
+A fourth, structurally separate option lives outside this per-gene
+architecture: `codes/core/08_free_ratio_concat.py` runs free-ratio on one
+concatenated alignment of every gene (the eLife/Galtier-lab layout) instead
+of pooling per-gene runs. It needs its own codeml call on a single
+supermatrix, so it isn't a `--analyses` choice — it's a separate optional
+stage (`run_buscomega.py --free-ratio-concat`), feeding Stage 7 an
+`omega_free_ratio_concat` column with no further pooling (a concatenate is
+already one "gene").
 
 ### Why a template, not a file per gene
 
@@ -992,8 +1007,11 @@ source, with or without conda, on Linux or WSL.
   branch-site model A answer "which residues are adaptively evolving" —
   a different question (primer §4). `04_codeml_control.py`'s analysis table
   is extensible if someone wants to add them, but they are not built.
-- **A free-ratio pipeline.** A separate ω on every branch is too many
-  parameters for single-gene alignments (primer §7).
+- **A free-ratio-first pipeline.** 2-ratio stays the default headline
+  method (primer §7 explains why). Free-ratio is available as an opt-in
+  robustness check (`--analyses ...,free_ratio`, or the fully separate
+  `--free-ratio-concat` concatenate layout) — for comparing against
+  2-ratio, not for replacing it as the reported number.
 - **An ancestral-lineage tool.** Stage 4 labels terminal branches only; the
   Nₑ proxy is about extant species.
 - **A gene-family / paralog analysis.** Stage 1 keeps strictly single-copy,
