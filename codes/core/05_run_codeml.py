@@ -93,7 +93,11 @@ def fill_template(template: str, *, seqfile: str, treefile: str,
 
 
 def concat_pml(genes: list[str], aln_dir: Path, dest: Path) -> None:
-    with dest.open("w", encoding="utf-8") as out:
+    # newline="\n": dest is real alignment data fed straight to PAML's codeml
+    # (a Linux C binary) -- Windows-Python text mode would write CRLF here,
+    # and codeml's own block parser isn't guaranteed to treat a stray \r as
+    # a safe no-op.
+    with dest.open("w", encoding="utf-8", newline="\n") as out:
         for g in genes:
             out.write((aln_dir / f"{g}.pml").read_text(encoding="utf-8").rstrip())
             out.write("\n\n")

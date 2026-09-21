@@ -125,7 +125,10 @@ def concatenate(aln_dir: Path, dest: Path,
             cat[t].append(seqs[t])
         used += 1
     total = sum(len(x) for x in cat[taxa_order[0]]) if taxa_order else 0
-    with dest.open("w", encoding="utf-8") as fh:
+    # newline="\n": dest is a PHYLIP-format alignment fed straight to PAML's
+    # codeml (a Linux C binary) -- same CRLF risk as concat_pml in
+    # 05_run_codeml.py.
+    with dest.open("w", encoding="utf-8", newline="\n") as fh:
         fh.write(f" {len(taxa_order)} {total}\n")
         for t in taxa_order:
             fh.write(f"{t}\n{''.join(cat[t])}\n")
