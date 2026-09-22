@@ -177,8 +177,8 @@ against the default 2-ratio method, not a replacement for it. See
 python -m pytest tests/        # or: for f in tests/test_*.py; do python "$f"; done
 ```
 
-Eight suites, no external binaries required (MAFFT/PAL2NAL/codeml are faked
-in the orchestration tests).
+No external binaries required — MAFFT/PAL2NAL/codeml are faked in the
+orchestration tests.
 
 ---
 
